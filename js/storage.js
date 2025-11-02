@@ -1,11 +1,12 @@
-// Sistema de almacenamiento local - VERSION SIMPLIFICADA Y FUNCIONAL
+// Sistema de almacenamiento local con sincronización mejorada
 class StorageManager {
     constructor() {
         this.keys = {
             DOCTORS: 'doctors',
             SHIFTS: 'shifts', 
             ADMINS: 'admins',
-            SETTINGS: 'settings'
+            SETTINGS: 'settings',
+            LAST_SYNC: 'last_sync'
         };
         this.init();
     }
@@ -27,12 +28,38 @@ class StorageManager {
                 email: 'admin@uci.com'
             }]);
         }
+
+        // Sincronizar entre pestañas
+        this.setupCrossTabSync();
     }
 
-    // Métodos básicos
+    setupCrossTabSync() {
+        // Escuchar cambios en otras pestañas
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.keys.DOCTORS || e.key === this.keys.SHIFTS) {
+                console.log('Datos actualizados desde otra pestaña:', e.key);
+                // Disparar evento personalizado para que otros componentes se actualicen
+                window.dispatchEvent(new CustomEvent('dataUpdated', { 
+                    detail: { key: e.key, newValue: e.newValue } 
+                }));
+            }
+        });
+    }
+
+    // Métodos básicos mejorados para sincronización
     set(key, value) {
         try {
+            const oldValue = this.get(key);
             localStorage.setItem(key, JSON.stringify(value));
+            
+            // Disparar evento storage para sincronizar otras pestañas
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: key,
+                oldValue: JSON.stringify(oldValue),
+                newValue: JSON.stringify(value),
+                storageArea: localStorage
+            }));
+            
             return true;
         } catch (error) {
             console.error('Error guardando:', error);
@@ -78,7 +105,7 @@ class StorageManager {
         } else {
             // Nuevo
             doctorToSave = {
-                id: Date.now(),
+                id: Date.now() + Math.floor(Math.random() * 1000),
                 ...doctorData,
                 createdAt: new Date().toISOString(),
                 photo: doctorData.photo || 'assets/images/default-doctor.jpg'
@@ -94,11 +121,15 @@ class StorageManager {
 
     deleteDoctor(id) {
         const doctors = this.getDoctors().filter(d => d.id !== id);
-        this.set(this.keys.DOCTORS, doctors);
+        const success = this.set(this.keys.DOCTORS, doctors);
         
-        // Eliminar turnos del médico
-        const shifts = this.getShifts().filter(s => s.doctorId !== id);
-        this.set(this.keys.SHIFTS, shifts);
+        if (success) {
+            // Eliminar turnos del médico
+            const shifts = this.getShifts().filter(s => s.doctorId !== id);
+            this.set(this.keys.SHIFTS, shifts);
+        }
+        
+        return success;
     }
 
     // Turnos
@@ -120,7 +151,7 @@ class StorageManager {
         } else {
             // Nuevo
             shiftToSave = {
-                id: Date.now(),
+                id: Date.now() + Math.floor(Math.random() * 1000),
                 ...shiftData,
                 createdAt: new Date().toISOString()
             };
@@ -135,7 +166,7 @@ class StorageManager {
 
     deleteShift(id) {
         const shifts = this.getShifts().filter(s => s.id !== id);
-        this.set(this.keys.SHIFTS, shifts);
+        return this.set(this.keys.SHIFTS, shifts);
     }
 
     getShiftsByDoctor(doctorId) {
@@ -208,6 +239,14 @@ class StorageManager {
 
             return (shiftStart < existingEnd && shiftEnd > existingStart);
         });
+    }
+
+    // Limpiar datos (para testing)
+    clearAll() {
+        localStorage.removeItem(this.keys.DOCTORS);
+        localStorage.removeItem(this.keys.SHIFTS);
+        localStorage.removeItem(this.keys.ADMINS);
+        this.init();
     }
 }
 

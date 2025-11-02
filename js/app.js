@@ -1,4 +1,4 @@
-// Aplicación principal
+// Aplicación principal - VERSION MEJORADA CON SINCRONIZACIÓN
 class App {
     constructor() {
         this.currentSection = 'inicio';
@@ -8,8 +8,45 @@ class App {
     init() {
         this.setupEventListeners();
         this.setupModals();
+        this.setupDataSync();
         this.showSection('inicio');
         this.loadSampleData();
+    }
+
+    setupDataSync() {
+        // Escuchar cambios en los datos para actualizar todas las secciones
+        window.addEventListener('dataUpdated', (e) => {
+            console.log('Datos actualizados, refrescando interfaz...', e.detail.key);
+            
+            // Actualizar estadísticas
+            if (typeof doctors !== 'undefined') {
+                doctors.updateStats();
+            }
+            
+            // Actualizar calendario de inicio
+            if (typeof calendar !== 'undefined') {
+                calendar.renderMonthlyPreview();
+            }
+            
+            // Actualizar lista de médicos si estamos en esa sección
+            if (this.currentSection === 'medicos' && typeof doctors !== 'undefined') {
+                doctors.loadDoctors();
+            }
+            
+            // Actualizar calendario de turnos si estamos en esa sección
+            if (this.currentSection === 'turnos' && typeof shifts !== 'undefined') {
+                shifts.renderCalendar();
+            }
+        });
+
+        // También escuchar el evento storage estándar
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'doctors' || e.key === 'shifts') {
+                window.dispatchEvent(new CustomEvent('dataUpdated', { 
+                    detail: { key: e.key } 
+                }));
+            }
+        });
     }
 
     setupEventListeners() {
@@ -49,7 +86,7 @@ class App {
             });
         }
 
-        // Forms - CORREGIDO: Solo prevenir envío normal
+        // Forms
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
@@ -61,7 +98,7 @@ class App {
         const doctorForm = document.getElementById('doctor-form');
         if (doctorForm) {
             doctorForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // Solo prevenir envío normal
+                e.preventDefault();
             });
         }
 
@@ -69,7 +106,7 @@ class App {
         if (shiftForm) {
             shiftForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.handleSaveShift(e);
+                shifts.saveShift();
             });
         }
 
@@ -77,25 +114,7 @@ class App {
         const cancelDoctorBtn = document.getElementById('cancel-doctor');
         if (cancelDoctorBtn) {
             cancelDoctorBtn.addEventListener('click', () => {
-                this.closeDoctorModal();
-            });
-        }
-
-        const cancelShiftBtn = document.getElementById('cancel-shift');
-        if (cancelShiftBtn) {
-            cancelShiftBtn.addEventListener('click', () => {
-                shifts.closeShiftModal();
-            });
-        }
-
-        // Botón eliminar turno
-        const deleteShiftBtn = document.getElementById('delete-shift');
-        if (deleteShiftBtn) {
-            deleteShiftBtn.addEventListener('click', () => {
-                const shiftId = document.getElementById('shift-id').value;
-                if (shiftId) {
-                    shifts.deleteShift(parseInt(shiftId));
-                }
+                doctors.closeDoctorModal();
             });
         }
 
@@ -190,7 +209,7 @@ class App {
                     calendar.renderMonthlyPreview();
                 }
                 if (typeof doctors !== 'undefined') {
-                    doctors.updateStatistics();
+                    doctors.updateStats();
                 }
                 break;
             case 'medicos':
@@ -230,24 +249,6 @@ class App {
         }
     }
 
-    handleSaveShift(e) {
-        e.preventDefault();
-        const form = document.getElementById('shift-form');
-        if (form) {
-            const formData = new FormData(form);
-            if (shifts.saveShift(formData)) {
-                shifts.closeShiftModal();
-            }
-        }
-    }
-
-    closeDoctorModal() {
-        const modal = document.getElementById('doctor-modal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
-
     downloadBackup() {
         if (!auth.hasRole('admin')) {
             auth.showNotification('Solo los administradores pueden descargar backups', 'error');
@@ -272,6 +273,8 @@ class App {
         // Cargar datos de ejemplo si no hay datos
         const existingDoctors = storage.getDoctors();
         if (existingDoctors.length === 0) {
+            console.log('Cargando datos de ejemplo...');
+
             const sampleDoctors = [
                 {
                     id: 1,
@@ -294,17 +297,6 @@ class App {
                     password: 'doctor123',
                     photo: 'assets/images/default-doctor.jpg',
                     createdAt: new Date().toISOString()
-                },
-                {
-                    id: 3,
-                    name: 'Dr. Javier Martínez',
-                    specialty: 'Traumatología',
-                    email: 'j.martinez@uci.com',
-                    phone: '+34 600 555 666',
-                    username: 'jmartinez',
-                    password: 'doctor123',
-                    photo: 'assets/images/default-doctor.jpg',
-                    createdAt: new Date().toISOString()
                 }
             ];
 
@@ -314,22 +306,31 @@ class App {
 
             // Crear algunos turnos de ejemplo
             const today = new Date();
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 7; i++) {
                 const shiftDate = new Date(today);
                 shiftDate.setDate(today.getDate() + i);
                 
                 const shift = {
-                    doctorId: (i % 3) + 1,
+                    doctorId: (i % 2) + 1,
                     date: shiftDate.toISOString().split('T')[0],
-                    type: ['guardia', 'consulta', 'emergencia'][i % 3],
+                    type: ['guardia', 'consulta', 'emergencia', 'descanso'][i % 4],
                     startTime: '08:00',
                     endTime: '16:00',
-                    notes: i % 2 === 0 ? 'Turno regular' : 'Guardia especial'
+                    notes: `Turno ejemplo ${i + 1}`
                 };
                 
                 storage.saveShift(shift);
             }
+
+            console.log('Datos de ejemplo cargados correctamente');
         }
+    }
+
+    // Método para forzar sincronización (útil para debugging)
+    forceRefresh() {
+        if (typeof doctors !== 'undefined') doctors.loadDoctors();
+        if (typeof shifts !== 'undefined') shifts.renderCalendar();
+        if (typeof calendar !== 'undefined') calendar.renderMonthlyPreview();
     }
 }
 
@@ -340,8 +341,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.doctors = doctors;
     window.shifts = shifts;
     window.storage = storage;
+    window.calendar = calendar;
 });
 
 // Funciones globales para acceso desde HTML
 window.openLoginModal = () => app.openLoginModal();
 window.openDoctorModal = (id) => doctors.openDoctorModal(id);
+
+// Función de debug para ver datos actuales
+window.debugData = () => {
+    console.log('Médicos:', storage.getDoctors());
+    console.log('Turnos:', storage.getShifts());
+};
