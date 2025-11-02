@@ -19,6 +19,8 @@ class AuthManager {
     }
 
     login(username, password) {
+        console.log('Intentando login con:', username); // Debug
+        
         // Buscar en administradores
         let user = storage.findAdmin(username);
         let role = 'admin';
@@ -64,28 +66,30 @@ class AuthManager {
         const addShiftBtn = document.getElementById('add-shift-btn');
 
         if (this.isLoggedIn) {
-            loginBtn.style.display = 'none';
-            userInfo.style.display = 'flex';
-            userName.textContent = this.currentUser.name;
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (userInfo) userInfo.style.display = 'flex';
+            if (userName) userName.textContent = this.currentUser.name;
             
             // Mostrar/ocultar elementos según el rol
             if (this.userRole === 'admin') {
-                adminNav.style.display = 'block';
+                if (adminNav) adminNav.style.display = 'block';
                 if (addShiftBtn) addShiftBtn.style.display = 'block';
             } else {
-                adminNav.style.display = 'none';
+                if (adminNav) adminNav.style.display = 'none';
                 if (addShiftBtn) addShiftBtn.style.display = 'none';
             }
         } else {
-            loginBtn.style.display = 'block';
-            userInfo.style.display = 'none';
-            adminNav.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (userInfo) userInfo.style.display = 'none';
+            if (adminNav) adminNav.style.display = 'none';
             if (addShiftBtn) addShiftBtn.style.display = 'none';
         }
     }
 
     showNotification(message, type = 'info') {
         const notifications = document.getElementById('notifications');
+        if (!notifications) return;
+
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
@@ -106,41 +110,6 @@ class AuthManager {
         if (this.hasRole('admin')) return true;
         if (this.hasRole('doctor') && shift.doctorId === this.currentUser.id) return true;
         return false;
-    }
-
-    // Cambio de contraseña
-    changePassword(currentPassword, newPassword) {
-        if (!this.isLoggedIn) return false;
-        
-        if (this.currentUser.password !== currentPassword) {
-            this.showNotification('Contraseña actual incorrecta', 'error');
-            return false;
-        }
-
-        this.currentUser.password = newPassword;
-        
-        // Actualizar en almacenamiento según el rol
-        if (this.hasRole('admin')) {
-            const admins = storage.getAdmins();
-            const adminIndex = admins.findIndex(a => a.id === this.currentUser.id);
-            if (adminIndex !== -1) {
-                admins[adminIndex].password = newPassword;
-                storage.set('admins', admins);
-            }
-        } else {
-            const doctors = storage.getDoctors();
-            const doctorIndex = doctors.findIndex(d => d.id === this.currentUser.id);
-            if (doctorIndex !== -1) {
-                doctors[doctorIndex].password = newPassword;
-                storage.set('doctors', doctors);
-            }
-        }
-
-        // Actualizar sesión
-        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-        
-        this.showNotification('Contraseña actualizada correctamente', 'success');
-        return true;
     }
 }
 

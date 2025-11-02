@@ -1,18 +1,18 @@
-// Gestión de turnos
+// Gestión de turnos - VERSION SIMPLIFICADA Y FUNCIONAL
 class ShiftsManager {
     constructor() {
-        this.currentView = 'month';
         this.currentDate = new Date();
+        this.currentView = 'month';
         this.init();
     }
 
     init() {
-        this.setupEventListeners();
+        this.setupControls();
         this.renderCalendar();
     }
 
-    setupEventListeners() {
-        // Controles de vista
+    setupControls() {
+        // Botones de vista
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
@@ -22,23 +22,18 @@ class ShiftsManager {
             });
         });
 
-        // Navegación de período
-        document.getElementById('prev-period').addEventListener('click', () => {
-            this.navigatePeriod(-1);
-        });
+        // Navegación
+        document.getElementById('prev-period')?.addEventListener('click', () => this.navigate(-1));
+        document.getElementById('next-period')?.addEventListener('click', () => this.navigate(1));
 
-        document.getElementById('next-period').addEventListener('click', () => {
-            this.navigatePeriod(1);
-        });
-
-        // Modal de turnos
-        document.getElementById('add-shift-btn').addEventListener('click', () => {
+        // Botón agregar turno
+        document.getElementById('add-shift-btn')?.addEventListener('click', () => {
             this.openShiftModal();
         });
     }
 
-    navigatePeriod(direction) {
-        switch (this.currentView) {
+    navigate(direction) {
+        switch(this.currentView) {
             case 'month':
                 this.currentDate.setMonth(this.currentDate.getMonth() + direction);
                 break;
@@ -54,27 +49,32 @@ class ShiftsManager {
 
     renderCalendar() {
         const container = document.getElementById('calendar-view');
-        const periodElement = document.getElementById('current-period');
+        const period = document.getElementById('current-period');
+        
+        if (!container) return;
 
-        switch (this.currentView) {
+        let html = '';
+        let periodText = '';
+
+        switch(this.currentView) {
             case 'month':
-                container.innerHTML = this.renderMonthView();
-                periodElement.textContent = this.currentDate.toLocaleDateString('es-ES', { 
+                html = this.renderMonthView();
+                periodText = this.currentDate.toLocaleDateString('es-ES', { 
                     month: 'long', 
                     year: 'numeric' 
                 }).toUpperCase();
                 break;
             case 'week':
-                container.innerHTML = this.renderWeekView();
+                html = this.renderWeekView();
                 const weekStart = new Date(this.currentDate);
                 weekStart.setDate(weekStart.getDate() - weekStart.getDay());
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekEnd.getDate() + 6);
-                periodElement.textContent = `Semana del ${weekStart.toLocaleDateString()} al ${weekEnd.toLocaleDateString()}`;
+                periodText = `Semana del ${weekStart.toLocaleDateString()} al ${weekEnd.toLocaleDateString()}`;
                 break;
             case 'day':
-                container.innerHTML = this.renderDayView();
-                periodElement.textContent = this.currentDate.toLocaleDateString('es-ES', {
+                html = this.renderDayView();
+                periodText = this.currentDate.toLocaleDateString('es-ES', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -82,43 +82,41 @@ class ShiftsManager {
                 }).toUpperCase();
                 break;
         }
+
+        container.innerHTML = html;
+        if (period) period.textContent = periodText;
     }
 
     renderMonthView() {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
-        
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
         
-        const endDate = new Date(lastDay);
-        endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
-        
         let html = '<div class="calendar-month">';
         
-        // Encabezados de días
-        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        days.forEach(day => {
+        // Encabezados
+        ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].forEach(day => {
             html += `<div class="calendar-day-header">${day}</div>`;
         });
-        
-        // Días del mes
-        const currentDate = new Date(startDate);
-        while (currentDate <= endDate) {
-            const isOtherMonth = currentDate.getMonth() !== month;
-            const dateString = currentDate.toISOString().split('T')[0];
-            const shifts = storage.getShiftsByDateRange(currentDate, currentDate);
+
+        // Días
+        const current = new Date(startDate);
+        while (current <= new Date(lastDay.getTime() + (6 - lastDay.getDay()) * 86400000)) {
+            const isOtherMonth = current.getMonth() !== month;
+            const dateStr = current.toISOString().split('T')[0];
+            const shifts = storage.getShiftsByDate(dateStr);
             
             html += `
                 <div class="calendar-day ${isOtherMonth ? 'other-month' : ''}">
-                    <div class="day-number">${currentDate.getDate()}</div>
+                    <div class="day-number">${current.getDate()}</div>
                     ${shifts.map(shift => this.renderShiftItem(shift)).join('')}
                 </div>
             `;
             
-            currentDate.setDate(currentDate.getDate() + 1);
+            current.setDate(current.getDate() + 1);
         }
         
         html += '</div>';
@@ -126,22 +124,22 @@ class ShiftsManager {
     }
 
     renderWeekView() {
-        const weekStart = new Date(this.currentDate);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const start = new Date(this.currentDate);
+        start.setDate(start.getDate() - start.getDay());
         
         let html = '<div class="calendar-week">';
         
         for (let i = 0; i < 7; i++) {
-            const currentDate = new Date(weekStart);
-            currentDate.setDate(currentDate.getDate() + i);
-            const dateString = currentDate.toISOString().split('T')[0];
-            const shifts = storage.getShiftsByDateRange(currentDate, currentDate);
+            const current = new Date(start);
+            current.setDate(start.getDate() + i);
+            const dateStr = current.toISOString().split('T')[0];
+            const shifts = storage.getShiftsByDate(dateStr);
             
             html += `
                 <div class="calendar-day">
                     <div class="day-header">
-                        ${currentDate.toLocaleDateString('es-ES', { weekday: 'short' })} 
-                        ${currentDate.getDate()}
+                        ${current.toLocaleDateString('es-ES', { weekday: 'short' })} 
+                        ${current.getDate()}
                     </div>
                     <div class="shifts-container">
                         ${shifts.map(shift => this.renderShiftItem(shift, true)).join('')}
@@ -155,13 +153,15 @@ class ShiftsManager {
     }
 
     renderDayView() {
-        const dateString = this.currentDate.toISOString().split('T')[0];
-        const shifts = storage.getShiftsByDateRange(this.currentDate, this.currentDate);
+        const dateStr = this.currentDate.toISOString().split('T')[0];
+        const shifts = storage.getShiftsByDate(dateStr);
         
         let html = `
             <div class="calendar-day-detailed">
                 <div class="time-slots">
-                    ${this.generateTimeSlots()}
+                    ${Array.from({length: 24}, (_, i) => 
+                        `<div class="time-slot">${i.toString().padStart(2, '0')}:00</div>`
+                    ).join('')}
                 </div>
                 <div class="shifts-timeline">
                     ${shifts.map(shift => this.renderTimelineShift(shift)).join('')}
@@ -172,31 +172,19 @@ class ShiftsManager {
         return html;
     }
 
-    generateTimeSlots() {
-        let html = '';
-        for (let hour = 0; hour < 24; hour++) {
-            html += `<div class="time-slot">${hour.toString().padStart(2, '0')}:00</div>`;
-        }
-        return html;
-    }
-
     renderShiftItem(shift, detailed = false) {
         const doctor = storage.getDoctors().find(d => d.id === shift.doctorId);
         if (!doctor) return '';
-
-        const timeInfo = detailed ? 
-            `${shift.startTime} - ${shift.endTime}` : 
-            `${shift.startTime.split(':')[0]}h`;
 
         return `
             <div class="shift-item ${shift.type}" 
                  onclick="shifts.openShiftModal(${shift.id})"
                  title="${doctor.name} - ${shift.type} (${shift.startTime}-${shift.endTime})">
                 ${detailed ? `
-                    <strong>${doctor.name}</strong><br>
-                    ${shift.type} - ${timeInfo}
+                    <strong>${doctor.name.split(' ')[0]}</strong><br>
+                    ${shift.type} - ${shift.startTime}
                 ` : `
-                    ${doctor.name.split(' ')[0]} - ${timeInfo}
+                    ${doctor.name.split(' ')[0]} - ${shift.startTime.split(':')[0]}h
                 `}
             </div>
         `;
@@ -206,20 +194,17 @@ class ShiftsManager {
         const doctor = storage.getDoctors().find(d => d.id === shift.doctorId);
         if (!doctor) return '';
 
-        const startHour = parseInt(shift.startTime.split(':')[0]);
-        const startMinute = parseInt(shift.startTime.split(':')[1]);
-        const endHour = parseInt(shift.endTime.split(':')[0]);
-        const endMinute = parseInt(shift.endTime.split(':')[1]);
-        
-        const top = (startHour * 60 + startMinute) * 100 / 1440; // 1440 minutos en un día
-        const height = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) * 100 / 1440;
+        const start = parseInt(shift.startTime.split(':')[0]);
+        const end = parseInt(shift.endTime.split(':')[0]);
+        const top = (start / 24) * 100;
+        const height = ((end - start) / 24) * 100;
 
         return `
             <div class="timeline-shift ${shift.type}" 
                  style="top: ${top}%; height: ${height}%;"
                  onclick="shifts.openShiftModal(${shift.id})">
                 <div class="shift-content">
-                    <strong>${doctor.name}</strong><br>
+                    <strong>${doctor.name.split(' ')[0]}</strong><br>
                     ${shift.type}<br>
                     ${shift.startTime} - ${shift.endTime}
                 </div>
@@ -227,56 +212,30 @@ class ShiftsManager {
         `;
     }
 
-    openShiftModal(shiftId = null, date = null) {
+    openShiftModal(shiftId = null) {
         if (!auth.isLoggedIn) {
-            auth.showNotification('Debe iniciar sesión para gestionar turnos', 'error');
+            alert('Debe iniciar sesión');
             return;
         }
 
         const modal = document.getElementById('shift-modal');
         const title = document.getElementById('shift-modal-title');
-        const form = document.getElementById('shift-form');
-        const deleteBtn = document.getElementById('delete-shift');
+        
+        if (!modal || !title) return;
 
-        // Llenar select de médicos
         this.populateDoctorsSelect();
 
         if (shiftId) {
-            // Modo edición
+            // Editar
             const shift = storage.getShifts().find(s => s.id === shiftId);
             if (shift) {
-                if (!auth.canEditShift(shift)) {
-                    auth.showNotification('No tiene permisos para editar este turno', 'error');
-                    return;
-                }
-
                 title.textContent = 'Editar Turno';
-                document.getElementById('shift-id').value = shift.id;
-                document.getElementById('shift-doctor').value = shift.doctorId;
-                document.getElementById('shift-date').value = shift.date;
-                document.getElementById('shift-type').value = shift.type;
-                document.getElementById('shift-start').value = shift.startTime;
-                document.getElementById('shift-end').value = shift.endTime;
-                document.getElementById('shift-notes').value = shift.notes || '';
-                
-                deleteBtn.style.display = auth.hasRole('admin') ? 'block' : 'none';
+                this.fillShiftForm(shift);
             }
         } else {
-            // Modo creación
-            if (!auth.hasRole('admin')) {
-                auth.showNotification('Solo los administradores pueden crear turnos', 'error');
-                return;
-            }
-
+            // Nuevo
             title.textContent = 'Nuevo Turno';
-            form.reset();
-            document.getElementById('shift-id').value = '';
-            
-            if (date) {
-                document.getElementById('shift-date').value = date;
-            }
-            
-            deleteBtn.style.display = 'none';
+            this.clearShiftForm();
         }
 
         modal.style.display = 'block';
@@ -284,89 +243,128 @@ class ShiftsManager {
 
     populateDoctorsSelect() {
         const select = document.getElementById('shift-doctor');
+        if (!select) return;
+
         const doctors = storage.getDoctors();
-        
-        select.innerHTML = doctors.map(doctor => 
-            `<option value="${doctor.id}">${doctor.name} - ${doctor.specialty}</option>`
-        ).join('');
+        select.innerHTML = '<option value="">Seleccionar médico</option>' +
+            doctors.map(d => `<option value="${d.id}">${d.name} - ${d.specialty}</option>`).join('');
     }
 
-    saveShift(formData) {
-        const shift = {
-            id: formData.get('id') ? parseInt(formData.get('id')) : null,
-            doctorId: parseInt(formData.get('doctorId')),
-            date: formData.get('date'),
-            type: formData.get('type'),
-            startTime: formData.get('startTime'),
-            endTime: formData.get('endTime'),
-            notes: formData.get('notes')
+    fillShiftForm(shift) {
+        document.getElementById('shift-id').value = shift.id;
+        document.getElementById('shift-doctor').value = shift.doctorId;
+        document.getElementById('shift-date').value = shift.date;
+        document.getElementById('shift-type').value = shift.type;
+        document.getElementById('shift-start').value = shift.startTime;
+        document.getElementById('shift-end').value = shift.endTime;
+        document.getElementById('shift-notes').value = shift.notes || '';
+    }
+
+    clearShiftForm() {
+        document.getElementById('shift-form').reset();
+        document.getElementById('shift-id').value = '';
+        // Valores por defecto
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('shift-date').value = today;
+        document.getElementById('shift-start').value = '08:00';
+        document.getElementById('shift-end').value = '16:00';
+    }
+
+    saveShift() {
+        const formData = this.getShiftFormData();
+        
+        if (!this.validateShift(formData)) {
+            return false;
+        }
+
+        const shiftData = {
+            id: formData.id ? parseInt(formData.id) : null,
+            doctorId: parseInt(formData.doctorId),
+            date: formData.date,
+            type: formData.type,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            notes: formData.notes
         };
 
-        // Validaciones
-        if (!this.validateShift(shift)) {
+        // Verificar conflicto
+        if (storage.checkShiftConflict(shiftData, shiftData.id)) {
+            this.showNotification('Conflicto de horario', 'error');
             return false;
         }
 
-        // Verificar conflictos
-        if (storage.checkShiftConflict(shift, shift.id)) {
-            auth.showNotification('Conflicto de horario: el médico ya tiene un turno en este horario', 'error');
-            return false;
-        }
-
-        const savedShift = storage.saveShift(shift);
-        this.renderCalendar();
-        auth.showNotification(
-            shift.id ? 'Turno actualizado correctamente' : 'Turno creado correctamente',
-            'success'
-        );
-        return true;
-    }
-
-    validateShift(shift) {
-        if (!shift.doctorId || !shift.date || !shift.type || !shift.startTime || !shift.endTime) {
-            auth.showNotification('Todos los campos requeridos deben ser completados', 'error');
-            return false;
-        }
-
-        if (shift.startTime >= shift.endTime) {
-            auth.showNotification('La hora de fin debe ser posterior a la hora de inicio', 'error');
-            return false;
-        }
-
-        const shiftDate = new Date(shift.date);
-        if (shiftDate < new Date().setHours(0, 0, 0, 0)) {
-            auth.showNotification('No se pueden asignar turnos en fechas pasadas', 'error');
-            return false;
-        }
-
-        return true;
-    }
-
-    deleteShift(shiftId) {
-        if (!auth.hasRole('admin')) {
-            auth.showNotification('No tiene permisos para eliminar turnos', 'error');
-            return;
-        }
-
-        if (confirm('¿Está seguro de que desea eliminar este turno?')) {
-            storage.deleteShift(shiftId);
+        const saved = storage.saveShift(shiftData);
+        if (saved) {
             this.renderCalendar();
-            auth.showNotification('Turno eliminado correctamente', 'success');
             this.closeShiftModal();
+            this.showNotification('Turno guardado', 'success');
+            return true;
+        } else {
+            this.showNotification('Error al guardar', 'error');
+            return false;
+        }
+    }
+
+    getShiftFormData() {
+        return {
+            id: document.getElementById('shift-id').value,
+            doctorId: document.getElementById('shift-doctor').value,
+            date: document.getElementById('shift-date').value,
+            type: document.getElementById('shift-type').value,
+            startTime: document.getElementById('shift-start').value,
+            endTime: document.getElementById('shift-end').value,
+            notes: document.getElementById('shift-notes').value
+        };
+    }
+
+    validateShift(data) {
+        if (!data.doctorId || !data.date || !data.type || !data.startTime || !data.endTime) {
+            this.showNotification('Complete todos los campos', 'error');
+            return false;
+        }
+
+        if (data.startTime >= data.endTime) {
+            this.showNotification('Hora fin debe ser posterior', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    deleteShift() {
+        const shiftId = document.getElementById('shift-id').value;
+        if (shiftId && confirm('¿Eliminar este turno?')) {
+            storage.deleteShift(parseInt(shiftId));
+            this.renderCalendar();
+            this.closeShiftModal();
+            this.showNotification('Turno eliminado', 'success');
         }
     }
 
     closeShiftModal() {
-        document.getElementById('shift-modal').style.display = 'none';
+        const modal = document.getElementById('shift-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
-    // Método para obtener turnos del médico actual (si es doctor)
-    getMyShifts() {
-        if (!auth.isLoggedIn || !auth.hasRole('doctor')) return [];
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#3498db'};
+            color: white;
+            border-radius: 5px;
+            z-index: 1000;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
         
-        return storage.getShiftsByDoctor(auth.currentUser.id);
+        setTimeout(() => notification.remove(), 3000);
     }
 }
 
-// Instancia global del gestor de turnos
 const shifts = new ShiftsManager();

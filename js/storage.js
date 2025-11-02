@@ -1,209 +1,215 @@
-// Sistema de almacenamiento local
+// Sistema de almacenamiento local - VERSION SIMPLIFICADA Y FUNCIONAL
 class StorageManager {
     constructor() {
+        this.keys = {
+            DOCTORS: 'doctors',
+            SHIFTS: 'shifts', 
+            ADMINS: 'admins',
+            SETTINGS: 'settings'
+        };
         this.init();
     }
 
     init() {
-        // Inicializar datos por defecto si no existen
-        if (!this.get('doctors')) {
-            this.set('doctors', []);
+        // Datos iniciales
+        if (!this.get(this.keys.DOCTORS)) {
+            this.set(this.keys.DOCTORS, []);
         }
-        if (!this.get('shifts')) {
-            this.set('shifts', []);
+        if (!this.get(this.keys.SHIFTS)) {
+            this.set(this.keys.SHIFTS, []);
         }
-        if (!this.get('admins')) {
-            // Admin por defecto
-            this.set('admins', [
-                {
-                    id: 1,
-                    username: 'admin',
-                    password: 'admin123',
-                    name: 'Administrador Principal',
-                    email: 'admin@uci.com'
-                }
-            ]);
-        }
-        if (!this.get('settings')) {
-            this.set('settings', {
-                hospitalName: 'UCI Medical Center',
-                workingHours: {
-                    start: '08:00',
-                    end: '20:00'
-                },
-                shiftTypes: ['guardia', 'consulta', 'emergencia', 'descanso']
-            });
+        if (!this.get(this.keys.ADMINS)) {
+            this.set(this.keys.ADMINS, [{
+                id: 1,
+                username: 'admin',
+                password: 'admin123',
+                name: 'Administrador Principal',
+                email: 'admin@uci.com'
+            }]);
         }
     }
 
-    // Métodos básicos de almacenamiento
+    // Métodos básicos
     set(key, value) {
-        localStorage.setItem(key, JSON.stringify(value));
-    }
-
-    get(key) {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : null;
-    }
-
-    remove(key) {
-        localStorage.removeItem(key);
-    }
-
-    clear() {
-        localStorage.clear();
-        this.init();
-    }
-
-    // Métodos específicos para médicos
-    getDoctors() {
-        return this.get('doctors') || [];
-    }
-
-    saveDoctor(doctor) {
-        const doctors = this.getDoctors();
-        if (doctor.id) {
-            // Actualizar médico existente
-            const index = doctors.findIndex(d => d.id === doctor.id);
-            if (index !== -1) {
-                doctors[index] = doctor;
-            }
-        } else {
-            // Nuevo médico
-            doctor.id = this.generateId(doctors);
-            doctor.createdAt = new Date().toISOString();
-            doctors.push(doctor);
-        }
-        this.set('doctors', doctors);
-        return doctor;
-    }
-
-    deleteDoctor(id) {
-        const doctors = this.getDoctors().filter(d => d.id !== id);
-        this.set('doctors', doctors);
-        
-        // Eliminar turnos asociados
-        const shifts = this.getShifts().filter(s => s.doctorId !== id);
-        this.set('shifts', shifts);
-    }
-
-    // Métodos específicos para turnos
-    getShifts() {
-        return this.get('shifts') || [];
-    }
-
-    saveShift(shift) {
-        const shifts = this.getShifts();
-        if (shift.id) {
-            // Actualizar turno existente
-            const index = shifts.findIndex(s => s.id === shift.id);
-            if (index !== -1) {
-                shifts[index] = shift;
-            }
-        } else {
-            // Nuevo turno
-            shift.id = this.generateId(shifts);
-            shift.createdAt = new Date().toISOString();
-            shifts.push(shift);
-        }
-        this.set('shifts', shifts);
-        return shift;
-    }
-
-    deleteShift(id) {
-        const shifts = this.getShifts().filter(s => s.id !== id);
-        this.set('shifts', shifts);
-    }
-
-    getShiftsByDoctor(doctorId) {
-        return this.getShifts().filter(shift => shift.doctorId === doctorId);
-    }
-
-    getShiftsByDateRange(startDate, endDate) {
-        const shifts = this.getShifts();
-        return shifts.filter(shift => {
-            const shiftDate = new Date(shift.date);
-            return shiftDate >= startDate && shiftDate <= endDate;
-        });
-    }
-
-    // Métodos para administradores
-    getAdmins() {
-        return this.get('admins') || [];
-    }
-
-    findAdmin(username) {
-        return this.getAdmins().find(admin => admin.username === username);
-    }
-
-    // Utilidades
-    generateId(items) {
-        const maxId = items.reduce((max, item) => Math.max(max, item.id || 0), 0);
-        return maxId + 1;
-    }
-
-    // Backup y restauración
-    exportData() {
-        const data = {
-            doctors: this.getDoctors(),
-            shifts: this.getShifts(),
-            admins: this.getAdmins(),
-            settings: this.get('settings'),
-            exportDate: new Date().toISOString()
-        };
-        return JSON.stringify(data, null, 2);
-    }
-
-    importData(jsonData) {
         try {
-            const data = JSON.parse(jsonData);
-            if (data.doctors) this.set('doctors', data.doctors);
-            if (data.shifts) this.set('shifts', data.shifts);
-            if (data.admins) this.set('admins', data.admins);
-            if (data.settings) this.set('settings', data.settings);
+            localStorage.setItem(key, JSON.stringify(value));
             return true;
         } catch (error) {
-            console.error('Error importing data:', error);
+            console.error('Error guardando:', error);
             return false;
         }
     }
 
-    // Validación de conflictos de horarios
+    get(key) {
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : null;
+        } catch (error) {
+            console.error('Error leyendo:', error);
+            return null;
+        }
+    }
+
+    // Médicos
+    getDoctors() {
+        return this.get(this.keys.DOCTORS) || [];
+    }
+
+    saveDoctor(doctorData) {
+        const doctors = this.getDoctors();
+        let doctorToSave;
+
+        if (doctorData.id) {
+            // Editar
+            const index = doctors.findIndex(d => d.id === doctorData.id);
+            if (index !== -1) {
+                // Mantener datos existentes
+                const existing = doctors[index];
+                doctorToSave = {
+                    ...existing,
+                    ...doctorData,
+                    // Mantener foto si no se proporciona nueva
+                    photo: doctorData.photo || existing.photo,
+                    // Mantener contraseña si no se cambia
+                    password: doctorData.password || existing.password
+                };
+                doctors[index] = doctorToSave;
+            }
+        } else {
+            // Nuevo
+            doctorToSave = {
+                id: Date.now(),
+                ...doctorData,
+                createdAt: new Date().toISOString(),
+                photo: doctorData.photo || 'assets/images/default-doctor.jpg'
+            };
+            doctors.push(doctorToSave);
+        }
+
+        if (this.set(this.keys.DOCTORS, doctors)) {
+            return doctorToSave;
+        }
+        return null;
+    }
+
+    deleteDoctor(id) {
+        const doctors = this.getDoctors().filter(d => d.id !== id);
+        this.set(this.keys.DOCTORS, doctors);
+        
+        // Eliminar turnos del médico
+        const shifts = this.getShifts().filter(s => s.doctorId !== id);
+        this.set(this.keys.SHIFTS, shifts);
+    }
+
+    // Turnos
+    getShifts() {
+        return this.get(this.keys.SHIFTS) || [];
+    }
+
+    saveShift(shiftData) {
+        const shifts = this.getShifts();
+        let shiftToSave;
+
+        if (shiftData.id) {
+            // Editar
+            const index = shifts.findIndex(s => s.id === shiftData.id);
+            if (index !== -1) {
+                shiftToSave = { ...shifts[index], ...shiftData };
+                shifts[index] = shiftToSave;
+            }
+        } else {
+            // Nuevo
+            shiftToSave = {
+                id: Date.now(),
+                ...shiftData,
+                createdAt: new Date().toISOString()
+            };
+            shifts.push(shiftToSave);
+        }
+
+        if (this.set(this.keys.SHIFTS, shifts)) {
+            return shiftToSave;
+        }
+        return null;
+    }
+
+    deleteShift(id) {
+        const shifts = this.getShifts().filter(s => s.id !== id);
+        this.set(this.keys.SHIFTS, shifts);
+    }
+
+    getShiftsByDoctor(doctorId) {
+        return this.getShifts().filter(s => s.doctorId === doctorId);
+    }
+
+    getShiftsByDate(date) {
+        const targetDate = new Date(date).toDateString();
+        return this.getShifts().filter(shift => {
+            const shiftDate = new Date(shift.date).toDateString();
+            return shiftDate === targetDate;
+        });
+    }
+
+    getShiftsByDateRange(startDate, endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return this.getShifts().filter(shift => {
+            const shiftDate = new Date(shift.date);
+            return shiftDate >= start && shiftDate <= end;
+        });
+    }
+
+    // Administradores
+    getAdmins() {
+        return this.get(this.keys.ADMINS) || [];
+    }
+
+    findAdmin(username) {
+        return this.getAdmins().find(a => a.username === username);
+    }
+
+    // Utilidades
+    exportData() {
+        return JSON.stringify({
+            doctors: this.getDoctors(),
+            shifts: this.getShifts(),
+            admins: this.getAdmins(),
+            exportDate: new Date().toISOString()
+        }, null, 2);
+    }
+
+    getStatistics() {
+        const doctors = this.getDoctors();
+        const shifts = this.getShifts();
+        
+        return {
+            totalDoctors: doctors.length,
+            totalShifts: shifts.length,
+            specialties: [...new Set(doctors.map(d => d.specialty))].length
+        };
+    }
+
+    // Validación de conflictos
     checkShiftConflict(shift, excludeId = null) {
         const shifts = this.getShifts();
+        const shiftDate = new Date(shift.date);
         const shiftStart = new Date(`${shift.date}T${shift.startTime}`);
         const shiftEnd = new Date(`${shift.date}T${shift.endTime}`);
 
-        return shifts.some(existingShift => {
-            if (excludeId && existingShift.id === excludeId) return false;
-            if (existingShift.doctorId !== shift.doctorId) return false;
+        return shifts.some(existing => {
+            if (excludeId && existing.id === excludeId) return false;
+            if (existing.doctorId !== shift.doctorId) return false;
+            
+            const existingDate = new Date(existing.date);
+            if (existingDate.toDateString() !== shiftDate.toDateString()) return false;
 
-            const existingStart = new Date(`${existingShift.date}T${existingShift.startTime}`);
-            const existingEnd = new Date(`${existingShift.date}T${existingShift.endTime}`);
+            const existingStart = new Date(`${existing.date}T${existing.startTime}`);
+            const existingEnd = new Date(`${existing.date}T${existing.endTime}`);
 
             return (shiftStart < existingEnd && shiftEnd > existingStart);
         });
     }
-
-    // Estadísticas
-    getStatistics() {
-        const doctors = this.getDoctors();
-        const shifts = this.getShifts();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const recentShifts = shifts.filter(shift => 
-            new Date(shift.date) >= thirtyDaysAgo
-        );
-
-        return {
-            totalDoctors: doctors.length,
-            totalShifts: shifts.length,
-            shiftsLast30Days: recentShifts.length,
-            specialties: [...new Set(doctors.map(d => d.specialty))].length
-        };
-    }
 }
 
-// Instancia global del gestor de almacenamiento
+// Instancia global
 const storage = new StorageManager();

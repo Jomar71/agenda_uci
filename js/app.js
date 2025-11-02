@@ -9,7 +9,7 @@ class App {
         this.setupEventListeners();
         this.setupModals();
         this.showSection('inicio');
-        this.loadSampleData(); // Cargar datos de ejemplo para demo
+        this.loadSampleData();
     }
 
     setupEventListeners() {
@@ -23,65 +23,111 @@ class App {
         });
 
         // Menú móvil
-        document.querySelector('.mobile-menu-btn').addEventListener('click', () => {
-            document.querySelector('.nav').classList.toggle('active');
-        });
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                const nav = document.querySelector('.nav');
+                if (nav) {
+                    nav.classList.toggle('active');
+                }
+            });
+        }
 
         // Botón de login
-        document.getElementById('login-btn').addEventListener('click', () => {
-            this.openLoginModal();
-        });
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                this.openLoginModal();
+            });
+        }
 
         // Botón de logout
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            auth.logout();
-        });
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                auth.logout();
+            });
+        }
 
-        // Forms
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
+        // Forms - CORREGIDO: Solo prevenir envío normal
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleLogin(e);
+            });
+        }
 
-        document.getElementById('doctor-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSaveDoctor();
-        });
+        const doctorForm = document.getElementById('doctor-form');
+        if (doctorForm) {
+            doctorForm.addEventListener('submit', (e) => {
+                e.preventDefault(); // Solo prevenir envío normal
+            });
+        }
 
-        document.getElementById('shift-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSaveShift();
-        });
+        const shiftForm = document.getElementById('shift-form');
+        if (shiftForm) {
+            shiftForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSaveShift(e);
+            });
+        }
 
         // Botones de cancelar
-        document.getElementById('cancel-doctor').addEventListener('click', () => {
-            this.closeDoctorModal();
-        });
+        const cancelDoctorBtn = document.getElementById('cancel-doctor');
+        if (cancelDoctorBtn) {
+            cancelDoctorBtn.addEventListener('click', () => {
+                this.closeDoctorModal();
+            });
+        }
 
-        document.getElementById('cancel-shift').addEventListener('click', () => {
-            shifts.closeShiftModal();
-        });
+        const cancelShiftBtn = document.getElementById('cancel-shift');
+        if (cancelShiftBtn) {
+            cancelShiftBtn.addEventListener('click', () => {
+                shifts.closeShiftModal();
+            });
+        }
 
         // Botón eliminar turno
-        document.getElementById('delete-shift').addEventListener('click', () => {
-            const shiftId = document.getElementById('shift-id').value;
-            if (shiftId) {
-                shifts.deleteShift(parseInt(shiftId));
-            }
-        });
+        const deleteShiftBtn = document.getElementById('delete-shift');
+        if (deleteShiftBtn) {
+            deleteShiftBtn.addEventListener('click', () => {
+                const shiftId = document.getElementById('shift-id').value;
+                if (shiftId) {
+                    shifts.deleteShift(parseInt(shiftId));
+                }
+            });
+        }
 
         // Panel de administración
-        document.getElementById('manage-doctors').addEventListener('click', () => {
-            this.showSection('medicos');
-        });
+        const manageDoctorsBtn = document.getElementById('manage-doctors');
+        if (manageDoctorsBtn) {
+            manageDoctorsBtn.addEventListener('click', () => {
+                this.showSection('medicos');
+            });
+        }
 
-        document.getElementById('manage-shifts').addEventListener('click', () => {
-            this.showSection('turnos');
-        });
+        const manageShiftsBtn = document.getElementById('manage-shifts');
+        if (manageShiftsBtn) {
+            manageShiftsBtn.addEventListener('click', () => {
+                this.showSection('turnos');
+            });
+        }
 
-        document.getElementById('backup-data').addEventListener('click', () => {
-            this.downloadBackup();
-        });
+        const backupDataBtn = document.getElementById('backup-data');
+        if (backupDataBtn) {
+            backupDataBtn.addEventListener('click', () => {
+                this.downloadBackup();
+            });
+        }
+
+        // Botón agregar turno
+        const addShiftBtn = document.getElementById('add-shift-btn');
+        if (addShiftBtn) {
+            addShiftBtn.addEventListener('click', () => {
+                shifts.openShiftModal();
+            });
+        }
     }
 
     setupModals() {
@@ -98,7 +144,10 @@ class App {
         // Botones de cerrar modales
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.addEventListener('click', (e) => {
-                e.target.closest('.modal').style.display = 'none';
+                const modal = e.target.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
             });
         });
     }
@@ -115,61 +164,88 @@ class App {
         });
 
         // Mostrar sección seleccionada
-        document.getElementById(sectionName).classList.add('active');
-        
+        const sectionElement = document.getElementById(sectionName);
+        if (sectionElement) {
+            sectionElement.classList.add('active');
+        }
+
         // Activar link correspondiente
-        document.querySelector(`[href="#${sectionName}"]`).classList.add('active');
+        const linkElement = document.querySelector(`[href="#${sectionName}"]`);
+        if (linkElement) {
+            linkElement.classList.add('active');
+        }
 
         // Cerrar menú móvil si está abierto
-        document.querySelector('.nav').classList.remove('active');
+        const navElement = document.querySelector('.nav');
+        if (navElement) {
+            navElement.classList.remove('active');
+        }
 
         this.currentSection = sectionName;
 
         // Acciones específicas por sección
         switch(sectionName) {
             case 'inicio':
-                calendar.renderMonthlyPreview();
-                doctors.updateStatistics();
+                if (typeof calendar !== 'undefined') {
+                    calendar.renderMonthlyPreview();
+                }
+                if (typeof doctors !== 'undefined') {
+                    doctors.updateStatistics();
+                }
                 break;
             case 'medicos':
-                doctors.loadDoctors();
+                if (typeof doctors !== 'undefined') {
+                    doctors.loadDoctors();
+                }
                 break;
             case 'turnos':
-                shifts.renderCalendar();
+                if (typeof shifts !== 'undefined') {
+                    shifts.renderCalendar();
+                }
                 break;
         }
     }
 
     openLoginModal() {
-        document.getElementById('login-modal').style.display = 'block';
+        const modal = document.getElementById('login-modal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
     }
 
-    handleLogin() {
+    handleLogin(e) {
+        e.preventDefault();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
         if (auth.login(username, password)) {
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('login-form').reset();
+            const modal = document.getElementById('login-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            const form = document.getElementById('login-form');
+            if (form) {
+                form.reset();
+            }
         }
     }
 
-    handleSaveDoctor() {
-        const formData = new FormData(document.getElementById('doctor-form'));
-        if (doctors.saveDoctor(formData)) {
-            this.closeDoctorModal();
-        }
-    }
-
-    handleSaveShift() {
-        const formData = new FormData(document.getElementById('shift-form'));
-        if (shifts.saveShift(formData)) {
-            shifts.closeShiftModal();
+    handleSaveShift(e) {
+        e.preventDefault();
+        const form = document.getElementById('shift-form');
+        if (form) {
+            const formData = new FormData(form);
+            if (shifts.saveShift(formData)) {
+                shifts.closeShiftModal();
+            }
         }
     }
 
     closeDoctorModal() {
-        document.getElementById('doctor-modal').style.display = 'none';
+        const modal = document.getElementById('doctor-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
     downloadBackup() {
@@ -205,6 +281,7 @@ class App {
                     phone: '+34 600 111 222',
                     username: 'crodriguez',
                     password: 'doctor123',
+                    photo: 'assets/images/default-doctor.jpg',
                     createdAt: new Date().toISOString()
                 },
                 {
@@ -215,6 +292,7 @@ class App {
                     phone: '+34 600 333 444',
                     username: 'mlopez',
                     password: 'doctor123',
+                    photo: 'assets/images/default-doctor.jpg',
                     createdAt: new Date().toISOString()
                 },
                 {
@@ -225,11 +303,14 @@ class App {
                     phone: '+34 600 555 666',
                     username: 'jmartinez',
                     password: 'doctor123',
+                    photo: 'assets/images/default-doctor.jpg',
                     createdAt: new Date().toISOString()
                 }
             ];
 
-            sampleDoctors.forEach(doctor => storage.saveDoctor(doctor));
+            sampleDoctors.forEach(doctor => {
+                storage.saveDoctor(doctor);
+            });
 
             // Crear algunos turnos de ejemplo
             const today = new Date();
@@ -248,9 +329,6 @@ class App {
                 
                 storage.saveShift(shift);
             }
-
-            doctors.loadDoctors();
-            calendar.renderMonthlyPreview();
         }
     }
 }
@@ -258,6 +336,10 @@ class App {
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
+    window.auth = auth;
+    window.doctors = doctors;
+    window.shifts = shifts;
+    window.storage = storage;
 });
 
 // Funciones globales para acceso desde HTML

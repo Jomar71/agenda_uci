@@ -591,3 +591,224 @@ body {
 .mt-1 { margin-top: 1rem; }
 .mb-1 { margin-bottom: 1rem; }
 .hidden { display: none !important; }
+
+/* Estilos adicionales para correcciones */
+.calendar-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: var(--border-color);
+}
+
+.preview-day-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.preview-day {
+    background: white;
+    padding: 0.25rem;
+    min-height: 60px;
+    border: 1px solid var(--border-color);
+}
+
+.preview-day.other-month {
+    background: #f8f9fa;
+    color: #999;
+}
+
+.preview-day.today {
+    background: #e3f2fd;
+    border: 2px solid var(--secondary-color);
+}
+
+.preview-day-number {
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.preview-shifts {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.preview-shift {
+    height: 4px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.more-shifts {
+    font-size: 0.7rem;
+    color: #666;
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* Estilos para el calendario semanal */
+.calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1rem;
+}
+
+.calendar-week .calendar-day {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+}
+
+.calendar-week .day-header {
+    background: var(--light-color);
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+/* Estilos para el calendario diario */
+.calendar-day-detailed {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 1rem;
+}
+
+.time-slots {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-slot {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.shifts-timeline {
+    position: relative;
+    min-height: 1440px; /* 24 horas * 60 minutos */
+}
+
+.timeline-shift {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: var(--secondary-color);
+    color: white;
+    padding: 0.25rem;
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.timeline-shift .shift-content {
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+/* Mejoras responsive */
+@media (max-width: 768px) {
+    .calendar-preview-grid {
+        font-size: 0.7rem;
+    }
+    
+    .preview-day {
+        min-height: 50px;
+    }
+    
+    .preview-day-number {
+        font-size: 0.7rem;
+    }
+    
+    .calendar-week {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .calendar-day-detailed {
+        grid-template-columns: 60px 1fr;
+    }
+    
+    .time-slot {
+        height: 50px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Estilos para fotos de médicos */
+.doctor-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem auto;
+    border: 3px solid var(--secondary-color);
+}
+
+.doctor-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.doctor-card {
+    text-align: center;
+}
+
+/* Mejoras en los formularios */
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Estilos para selects */
+select {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Mejoras en los modales */
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Estilos para inputs de fecha y hora */
+input[type="date"],
+input[type="time"] {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+}
+
+input[type="date"]:focus,
+input[type="time"]:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
