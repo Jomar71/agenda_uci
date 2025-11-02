@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Médica - UCI</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <h1>UCI Medical</h1>
+            </div>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+                    <li><a href="#medicos" class="nav-link">Médicos</a></li>
+                    <li><a href="#turnos" class="nav-link">Turnos</a></li>
+                    <li id="admin-nav" style="display: none;"><a href="#admin" class="nav-link">Admin</a></li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <button id="login-btn" class="btn btn-primary">Iniciar Sesión</button>
+                <div id="user-info" style="display: none;">
+                    <span id="user-name"></span>
+                    <button id="logout-btn" class="btn btn-secondary">Cerrar Sesión</button>
+                </div>
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Sección Inicio -->
+        <section id="inicio" class="section active">
+            <div class="welcome-section">
+                <div class="welcome-header">
+                    <h2>Bienvenido al Sistema de Gestión UCI</h2>
+                    <p>Sistema especializado para la gestión de turnos médicos en Unidades de Cuidados Intensivos</p>
+                </div>
+                
+                <div class="about-uci">
+                    <h3>Sobre Nuestra UCI</h3>
+                    <div class="about-content">
+                        <div class="about-text">
+                            <p>Nuestra Unidad de Cuidados Intensivos cuenta con tecnología de punta y personal altamente calificado para brindar la mejor atención a pacientes críticos.</p>
+                            <ul>
+                                <li><i class="fas fa-check"></i> Monitoreo 24/7</li>
+                                <li><i class="fas fa-check"></i> Equipo multidisciplinario</li>
+                                <li><i class="fas fa-check"></i> Protocolos actualizados</li>
+                                <li><i class="fas fa-check"></i> Atención personalizada</li>
+                            </ul>
+                        </div>
+                        <div class="about-stats">
+                            <div class="stat-card">
+                                <i class="fas fa-user-md"></i>
+                                <span id="total-doctors">0</span>
+                                <p>Médicos Especializados</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-bed"></i>
+                                <span>20</span>
+                                <p>Camas UCI</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-clock"></i>
+                                <span>24/7</span>
+                                <p>Atención Continua</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="monthly-shifts-preview">
+                    <h3>Turnos del Mes</h3>
+                    <div id="monthly-calendar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Médicos -->
+        <section id="medicos" class="section">
+            <div class="section-header">
+                <h2>Nuestro Equipo Médico</h2>
+                <div class="controls">
+                    <div class="search-box">
+                        <input type="text" id="doctor-search" placeholder="Buscar médico...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <select id="specialty-filter">
+                        <option value="">Todas las especialidades</option>
+                    </select>
+                </div>
+            </div>
+            <div id="doctors-grid" class="doctors-grid"></div>
+        </section>
+
+        <!-- Sección Turnos -->
+        <section id="turnos" class="section">
+            <div class="section-header">
+                <h2>Gestión de Turnos</h2>
+                <div class="view-controls">
+                    <button class="btn view-btn active" data-view="month">Mensual</button>
+                    <button class="btn view-btn" data-view="week">Semanal</button>
+                    <button class="btn view-btn" data-view="day">Diario</button>
+                    <button id="add-shift-btn" class="btn btn-primary" style="display: none;">
+                        <i class="fas fa-plus"></i> Nuevo Turno
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prev-period"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="current-period"></h3>
+                    <button id="next-period"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div id="calendar-view"></div>
+            </div>
+        </section>
+
+        <!-- Sección Admin -->
+        <section id="admin" class="section">
+            <div class="section-header">
+                <h2>Panel de Administración</h2>
+            </div>
+            <div class="admin-dashboard">
+                <div class="admin-cards">
+                    <div class="admin-card">
+                        <h3><i class="fas fa-user-md"></i> Gestión de Médicos</h3>
+                        <button id="manage-doctors" class="btn btn-primary">Gestionar Médicos</button>
+                    </div>
+                    <div class="admin-card">
+                        <h3><i class="fas fa-calendar-alt"></i> Gestión de Turnos</h3>
+                        <button id="manage-shifts" class="btn btn-primary">Gestionar Turnos</button>
+                    </div>
+                    <div class="admin-card">
+                        <h3><i class="fas fa-users"></i> Administradores</h3>
+                        <button id="manage-admins" class="btn btn-primary">Gestionar Admins</button>
+                    </div>
+                    <div class="admin-card">
+                        <h3><i class="fas fa-download"></i> Backup</h3>
+                        <button id="backup-data" class="btn btn-secondary">Descargar Backup</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modales -->
+    <!-- Modal Login -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Doctor -->
+    <div id="doctor-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="doctor-modal-title">Detalles del Médico</h2>
+            <form id="doctor-form">
+                <input type="hidden" id="doctor-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="doctor-name">Nombre:</label>
+                        <input type="text" id="doctor-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctor-specialty">Especialidad:</label>
+                        <input type="text" id="doctor-specialty" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="doctor-email">Email:</label>
+                        <input type="email" id="doctor-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctor-phone">Teléfono:</label>
+                        <input type="tel" id="doctor-phone" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="doctor-username">Usuario:</label>
+                        <input type="text" id="doctor-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctor-password">Contraseña:</label>
+                        <input type="password" id="doctor-password">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-doctor">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Turno -->
+    <div id="shift-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="shift-modal-title">Nuevo Turno</h2>
+            <form id="shift-form">
+                <input type="hidden" id="shift-id">
+                <div class="form-group">
+                    <label for="shift-doctor">Médico:</label>
+                    <select id="shift-doctor" required></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shift-date">Fecha:</label>
+                        <input type="date" id="shift-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shift-type">Tipo de Turno:</label>
+                        <select id="shift-type" required>
+                            <option value="guardia">Guardia</option>
+                            <option value="consulta">Consulta</option>
+                            <option value="emergencia">Emergencia</option>
+                            <option value="descanso">Descanso</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shift-start">Hora Inicio:</label>
+                        <input type="time" id="shift-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shift-end">Hora Fin:</label>
+                        <input type="time" id="shift-end" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="shift-notes">Notas:</label>
+                    <textarea id="shift-notes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-shift">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="delete-shift" style="display: none;">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div id="notifications"></div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/doctors.js"></script>
+    <script src="js/shifts.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
