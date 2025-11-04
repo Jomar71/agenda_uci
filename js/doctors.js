@@ -1,4 +1,4 @@
-// Gestión de médicos - VERSION MEJORADA
+// Gestión de médicos - VERSION COMPLETAMENTE CORREGIDA
 class DoctorsManager {
     constructor() {
         this.doctors = [];
@@ -7,47 +7,82 @@ class DoctorsManager {
     }
 
     init() {
+        console.log('👨‍⚕️ Inicializando gestor de médicos...');
         this.loadDoctors();
         this.setupEventListeners();
     }
 
     setupEventListeners() {
+        console.log('🔧 Configurando eventos de médicos...');
+        
         // Botones del formulario de médico
-        document.getElementById('save-doctor-btn')?.addEventListener('click', () => this.saveDoctor());
-        document.getElementById('cancel-doctor-btn')?.addEventListener('click', () => this.closeDoctorModal());
+        const saveDoctorBtn = document.getElementById('save-doctor-btn');
+        const cancelDoctorBtn = document.getElementById('cancel-doctor-btn');
         
+        if (saveDoctorBtn) {
+            saveDoctorBtn.addEventListener('click', () => this.saveDoctor());
+            console.log('✅ Botón guardar médico configurado');
+        } else {
+            console.error('❌ No se encontró el botón guardar médico');
+        }
+        
+        if (cancelDoctorBtn) {
+            cancelDoctorBtn.addEventListener('click', () => this.closeDoctorModal());
+            console.log('✅ Botón cancelar médico configurado');
+        }
+
         // Subida de foto
-        document.getElementById('doctor-photo')?.addEventListener('change', (e) => this.handlePhotoUpload(e));
-        
+        const doctorPhotoInput = document.getElementById('doctor-photo');
+        if (doctorPhotoInput) {
+            doctorPhotoInput.addEventListener('change', (e) => this.handlePhotoUpload(e));
+            console.log('✅ Input de foto configurado');
+        }
+
         // Búsqueda y filtros
-        document.getElementById('doctor-search')?.addEventListener('input', () => this.filterDoctors());
-        document.getElementById('specialty-filter')?.addEventListener('change', () => this.filterDoctors());
+        const searchInput = document.getElementById('doctor-search');
+        const specialtyFilter = document.getElementById('specialty-filter');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterDoctors());
+        }
+        
+        if (specialtyFilter) {
+            specialtyFilter.addEventListener('change', () => this.filterDoctors());
+        }
         
         // Navegación desde admin
-        document.getElementById('manage-doctors')?.addEventListener('click', () => {
-            document.querySelector('[href="#medicos"]').click();
-        });
+        const manageDoctorsBtn = document.getElementById('manage-doctors');
+        if (manageDoctorsBtn) {
+            manageDoctorsBtn.addEventListener('click', () => {
+                document.querySelector('[href="#medicos"]').click();
+            });
+        }
     }
 
     loadDoctors() {
+        console.log('📂 Cargando médicos desde almacenamiento...');
         this.doctors = this.getDoctorsFromStorage();
         this.updateSpecialtyFilter();
         this.renderDoctors();
         this.updateStats();
+        console.log(`✅ ${this.doctors.length} médicos cargados`);
     }
 
     getDoctorsFromStorage() {
         try {
             const stored = localStorage.getItem('doctors');
             if (stored) {
-                return JSON.parse(stored);
+                const doctors = JSON.parse(stored);
+                console.log('📋 Médicos cargados del localStorage:', doctors.length);
+                return doctors;
             }
         } catch (error) {
-            console.error('Error cargando médicos:', error);
+            console.error('❌ Error cargando médicos:', error);
         }
         
-        // Datos de ejemplo
-        return [
+        // Datos de ejemplo si no hay datos
+        console.log('📝 Creando datos de ejemplo...');
+        const sampleDoctors = [
             {
                 id: 1,
                 name: 'Dr. Carlos Rodríguez',
@@ -71,24 +106,35 @@ class DoctorsManager {
                 createdAt: new Date().toISOString()
             }
         ];
+        
+        // Guardar datos de ejemplo
+        this.saveDoctorsToStorage(sampleDoctors);
+        return sampleDoctors;
     }
 
-    saveDoctorsToStorage() {
+    saveDoctorsToStorage(doctorsToSave = null) {
+        const doctors = doctorsToSave || this.doctors;
         try {
-            localStorage.setItem('doctors', JSON.stringify(this.doctors));
+            localStorage.setItem('doctors', JSON.stringify(doctors));
+            console.log('💾 Médicos guardados en localStorage:', doctors.length);
             return true;
         } catch (error) {
-            console.error('Error guardando médicos:', error);
-            auth.showNotification('Error al guardar los datos', 'error');
+            console.error('❌ Error guardando médicos:', error);
+            auth.showNotification('Error al guardar los datos de médicos', 'error');
             return false;
         }
     }
 
     renderDoctors(doctorsToRender = null) {
         const grid = document.getElementById('doctors-grid');
-        if (!grid) return;
+        if (!grid) {
+            console.error('❌ No se encontró el grid de médicos');
+            return;
+        }
 
         const doctors = doctorsToRender || this.doctors;
+        console.log('🎨 Renderizando médicos:', doctors.length);
+
         let html = '';
 
         if (doctors.length === 0) {
@@ -123,12 +169,15 @@ class DoctorsManager {
 
         grid.innerHTML = html;
         this.attachCardEvents();
+        console.log('✅ Médicos renderizados correctamente');
     }
 
     createDoctorCard(doctor) {
         const photoHTML = doctor.photo ? 
-            `<img src="${doctor.photo}" alt="${doctor.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNlY2YwZjEiLz4KPHBhdGggZD0iTTQwIDQ0QzQ0LjQxODMgNDQgNDggNDAuNDE4MyA0OCAzNkM0OCAzMS41ODE3IDQ0LjQxODMgMjggNDAgMjhDMzUuNTgxNyAyOCAzMiAzMS41ODE3IDMyIDM2QzMyIDQwLjQxODMgMzUuNTgxNyA0NCA0MCA0NFoiIGZpbGw9IiM5NWExYTYiLz4KPHBhdGggZD0iTTUyIDUyQzUyIDU2LjQxODMgNDYuNDE4MyA2MCA0MCA2MEMzMy41ODE3IDYwIDI4IDU2LjQxODMgMjggNTJWMzJINTJWNTJaIiBmaWxsPSIjOTVhMWE2Ii8+Cjwvc3ZnPgo='">` :
-            `<i class="fas fa-user-md"></i>`;
+            `<img src="${doctor.photo}" alt="${doctor.name}" style="width: 100%; height: 100%; object-fit: cover;">` :
+            `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #ecf0f1; border-radius: 50%;">
+                <i class="fas fa-user-md" style="font-size: 2rem; color: #95a5a6;"></i>
+             </div>`;
 
         return `
             <div class="doctor-card" data-id="${doctor.id}">
@@ -163,10 +212,13 @@ class DoctorsManager {
     }
 
     attachCardEvents() {
+        console.log('🔗 Adjuntando eventos a tarjetas de médicos...');
+        
         // Botón ver turnos
         document.querySelectorAll('.view-shifts-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const doctorId = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
+                console.log('👀 Ver turnos del médico:', doctorId);
                 this.viewDoctorShifts(doctorId);
             });
         });
@@ -176,6 +228,7 @@ class DoctorsManager {
             document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const doctorId = parseInt(e.target.closest('.edit-doctor-btn').dataset.id);
+                    console.log('✏️ Editando médico:', doctorId);
                     this.openDoctorModal(doctorId);
                 });
             });
@@ -183,10 +236,13 @@ class DoctorsManager {
             document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const doctorId = parseInt(e.target.closest('.delete-doctor-btn').dataset.id);
+                    console.log('🗑️ Eliminando médico:', doctorId);
                     this.deleteDoctor(doctorId);
                 });
             });
         }
+        
+        console.log('✅ Eventos de tarjetas configurados');
     }
 
     openDoctorModal(doctorId = null) {
@@ -198,7 +254,10 @@ class DoctorsManager {
         const modal = document.getElementById('doctor-modal');
         const title = document.getElementById('doctor-modal-title');
         
-        if (!modal || !title) return;
+        if (!modal || !title) {
+            console.error('❌ No se encontró el modal de médico');
+            return;
+        }
 
         // Resetear foto temporal
         this.currentPhoto = null;
@@ -209,11 +268,13 @@ class DoctorsManager {
             if (doctor) {
                 title.textContent = 'Editar Médico';
                 this.fillForm(doctor);
+                console.log('📝 Abriendo modal para editar médico:', doctor.name);
             }
         } else {
             // Modo creación
             title.textContent = 'Nuevo Médico';
             this.clearForm();
+            console.log('🆕 Abriendo modal para nuevo médico');
         }
 
         modal.style.display = 'block';
@@ -225,9 +286,12 @@ class DoctorsManager {
             modal.style.display = 'none';
         }
         this.currentPhoto = null;
+        console.log('📭 Modal de médico cerrado');
     }
 
     fillForm(doctor) {
+        console.log('📝 Llenando formulario con datos del médico:', doctor.name);
+        
         document.getElementById('doctor-id').value = doctor.id;
         document.getElementById('doctor-name').value = doctor.name;
         document.getElementById('doctor-specialty').value = doctor.specialty;
@@ -248,6 +312,7 @@ class DoctorsManager {
         document.getElementById('doctor-password').placeholder = 'Contraseña requerida';
         document.getElementById('doctor-password').required = true;
         this.updatePhotoPreview(null);
+        console.log('🧹 Formulario limpiado');
     }
 
     updatePhotoPreview(photoUrl) {
@@ -275,9 +340,11 @@ class DoctorsManager {
         const file = event.target.files[0];
         if (!file) return;
 
+        console.log('📸 Procesando upload de foto:', file.name);
+
         // Validar tipo de archivo
         if (!file.type.startsWith('image/')) {
-            auth.showNotification('Por favor selecciona un archivo de imagen válido', 'error');
+            auth.showNotification('Por favor selecciona un archivo de imagen válido (JPG, PNG, GIF)', 'error');
             event.target.value = '';
             return;
         }
@@ -293,18 +360,22 @@ class DoctorsManager {
         reader.onload = (e) => {
             this.currentPhoto = e.target.result;
             this.updatePhotoPreview(this.currentPhoto);
+            console.log('✅ Foto cargada correctamente');
         };
         reader.onerror = () => {
             auth.showNotification('Error al leer la imagen', 'error');
             event.target.value = '';
+            console.error('❌ Error leyendo la imagen');
         };
         reader.readAsDataURL(file);
     }
 
     saveDoctor() {
+        console.log('💾 Intentando guardar médico...');
         const formData = this.getFormData();
         
         if (!this.validateForm(formData)) {
+            console.error('❌ Validación de formulario falló');
             return false;
         }
 
@@ -346,6 +417,7 @@ class DoctorsManager {
                 
                 this.doctors[index] = doctorData;
                 successMessage = 'Médico actualizado correctamente';
+                console.log('✅ Médico actualizado:', doctorData.name);
             }
         } else {
             // Crear nuevo médico
@@ -353,6 +425,7 @@ class DoctorsManager {
             doctorData.createdAt = new Date().toISOString();
             this.doctors.push(doctorData);
             successMessage = 'Médico creado correctamente';
+            console.log('✅ Nuevo médico creado:', doctorData.name);
         }
 
         if (this.saveDoctorsToStorage()) {
@@ -361,6 +434,7 @@ class DoctorsManager {
             auth.showNotification(successMessage, 'success');
             return true;
         } else {
+            auth.showNotification('Error al guardar los cambios', 'error');
             return false;
         }
     }
@@ -378,10 +452,15 @@ class DoctorsManager {
     }
 
     validateForm(data) {
+        console.log('🔍 Validando formulario...', data);
+        
         // Validar campos requeridos
-        if (!data.name || !data.specialty || !data.email || !data.phone || !data.username) {
-            auth.showNotification('Todos los campos son requeridos', 'error');
-            return false;
+        const requiredFields = ['name', 'specialty', 'email', 'phone', 'username'];
+        for (const field of requiredFields) {
+            if (!data[field] || data[field].trim() === '') {
+                auth.showNotification(`El campo ${field} es requerido`, 'error');
+                return false;
+            }
         }
 
         // Validar email
@@ -399,13 +478,14 @@ class DoctorsManager {
 
         // Verificar username único
         const existingDoctor = this.doctors.find(d => 
-            d.username === data.username && d.id !== parseInt(data.id)
+            d.username === data.username && d.id !== parseInt(data.id || 0)
         );
         if (existingDoctor) {
             auth.showNotification('El nombre de usuario ya está en uso', 'error');
             return false;
         }
 
+        console.log('✅ Validación de formulario exitosa');
         return true;
     }
 
@@ -416,7 +496,10 @@ class DoctorsManager {
         }
 
         const doctor = this.doctors.find(d => d.id === id);
-        if (!doctor) return;
+        if (!doctor) {
+            console.error('❌ Médico no encontrado para eliminar:', id);
+            return;
+        }
 
         // Verificar si el médico tiene turnos
         const shifts = window.shiftsManager?.getShifts() || [];
@@ -435,24 +518,36 @@ class DoctorsManager {
             if (window.shiftsManager && doctorShifts.length > 0) {
                 const updatedShifts = shifts.filter(shift => shift.doctorId !== id);
                 window.shiftsManager.saveShifts(updatedShifts);
+                console.log(`🗑️ Eliminados ${doctorShifts.length} turnos del médico`);
             }
 
             if (this.saveDoctorsToStorage()) {
                 this.loadDoctors();
                 auth.showNotification('Médico eliminado correctamente', 'success');
+                console.log('✅ Médico eliminado:', doctor.name);
             }
         }
     }
 
     viewDoctorShifts(doctorId) {
-        // Navegar a la sección de turnos y filtrar por médico
-        document.querySelector('[href="#turnos"]').click();
+        console.log('📅 Navegando a turnos del médico:', doctorId);
         
-        // Aquí podrías implementar un filtro específico para el médico
+        // Navegar a la sección de turnos
+        const turnosLink = document.querySelector('[href="#turnos"]');
+        if (turnosLink) {
+            turnosLink.click();
+        }
+        
         auth.showNotification(`Mostrando turnos del médico seleccionado`, 'info');
         
         // En una implementación más avanzada, aquí filtrarías el calendario
         // para mostrar solo los turnos de este médico
+        setTimeout(() => {
+            if (window.shiftsManager) {
+                // Podrías implementar un filtro específico aquí
+                console.log('🔍 Filtrando turnos para médico:', doctorId);
+            }
+        }, 500);
     }
 
     filterDoctors() {
@@ -490,6 +585,8 @@ class DoctorsManager {
         if (currentValue && specialties.includes(currentValue)) {
             filter.value = currentValue;
         }
+        
+        console.log('✅ Filtro de especialidades actualizado:', specialties.length);
     }
 
     generateDoctorId() {
@@ -501,6 +598,7 @@ class DoctorsManager {
         const element = document.getElementById('total-doctors');
         if (element) {
             element.textContent = this.doctors.length;
+            console.log('📊 Estadísticas actualizadas:', this.doctors.length, 'médicos');
         }
     }
 

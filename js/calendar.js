@@ -1,4 +1,4 @@
-// Calendario para vista mensual en inicio
+// Calendario para vista mensual en inicio - VERSION CORREGIDA
 class CalendarManager {
     constructor() {
         this.currentDate = new Date();
@@ -6,12 +6,15 @@ class CalendarManager {
     }
 
     init() {
+        console.log('📅 Inicializando calendario mensual...');
         this.renderMonthlyPreview();
         this.setupEventListeners();
     }
 
     setupEventListeners() {
-        // Navegación del calendario mensual
+        console.log('🔧 Configurando eventos del calendario...');
+        
+        // Navegación del calendario mensual usando event delegation
         document.addEventListener('click', (e) => {
             if (e.target.closest('#prev-month')) {
                 this.prevMonth();
@@ -22,14 +25,27 @@ class CalendarManager {
 
         // Sincronización con cambios de datos
         window.addEventListener('storage', () => {
+            console.log('🔄 Sincronizando calendario por cambios en almacenamiento');
             this.renderMonthlyPreview();
+        });
+        
+        // Evento personalizado para sincronización interna
+        window.addEventListener('dataUpdated', (e) => {
+            if (e.detail?.key === 'shifts' || e.detail?.key === 'doctors') {
+                console.log('🔄 Sincronizando calendario por actualización de datos');
+                this.renderMonthlyPreview();
+            }
         });
     }
 
     renderMonthlyPreview() {
         const container = document.getElementById('monthly-calendar');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ No se encontró el contenedor del calendario mensual');
+            return;
+        }
 
+        console.log('🎨 Renderizando vista mensual...');
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
         const firstDay = new Date(year, month, 1);
@@ -122,6 +138,7 @@ class CalendarManager {
 
         container.innerHTML = html;
         this.attachPreviewEvents();
+        console.log('✅ Vista mensual renderizada correctamente');
     }
 
     renderPreviewShift(shift) {
@@ -138,13 +155,18 @@ class CalendarManager {
     }
 
     attachPreviewEvents() {
+        console.log('🔗 Adjuntando eventos a la vista previa...');
+        
         // Click en turnos para editarlos
         document.querySelectorAll('.preview-shift').forEach(shift => {
             shift.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const shiftId = parseInt(shift.dataset.id);
                 if (shiftId && auth.isLoggedIn) {
+                    console.log('✏️ Editando turno desde vista previa:', shiftId);
                     window.shiftsManager?.openShiftModal(shiftId);
+                } else if (!auth.isLoggedIn) {
+                    auth.showNotification('Debe iniciar sesión para editar turnos', 'warning');
                 }
             });
         });
@@ -152,28 +174,38 @@ class CalendarManager {
         // Click en días para crear nuevos turnos
         document.querySelectorAll('.preview-day').forEach(day => {
             day.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('preview-shift')) {
+                if (!e.target.classList.contains('preview-shift') && 
+                    !e.target.closest('.preview-shift')) {
+                    
                     const date = day.dataset.date;
                     if (date && auth.isLoggedIn) {
+                        console.log('📅 Creando turno desde vista previa para fecha:', date);
                         window.shiftsManager?.openShiftModal(null, date);
+                    } else if (!auth.isLoggedIn) {
+                        auth.showNotification('Debe iniciar sesión para crear turnos', 'warning');
                     }
                 }
             });
         });
+        
+        console.log('✅ Eventos de vista previa configurados');
     }
 
     prevMonth() {
         this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        console.log('⬅️ Navegando al mes anterior:', this.currentDate.toLocaleDateString('es-ES'));
         this.renderMonthlyPreview();
     }
 
     nextMonth() {
         this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        console.log('➡️ Navegando al mes siguiente:', this.currentDate.toLocaleDateString('es-ES'));
         this.renderMonthlyPreview();
     }
 
     // Para sincronización externa
     refresh() {
+        console.log('🔄 Forzando actualización del calendario');
         this.renderMonthlyPreview();
     }
 }

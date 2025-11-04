@@ -1,8 +1,42 @@
 /* Tablet */
+@media (max-width: 1024px) {
+    .header-container {
+        padding: 0.75rem;
+    }
+
+    .nav-list {
+        gap: 1rem;
+    }
+
+    .about-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .doctors-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .calendar-month {
+        min-width: 700px;
+    }
+
+    .calendar-week {
+        min-width: 700px;
+    }
+}
+
+/* Tablet Pequeña */
 @media (max-width: 768px) {
     .header-container {
         flex-wrap: wrap;
         padding: 0.5rem;
+        gap: 1rem;
+    }
+
+    .logo h1 {
+        font-size: 1.3rem;
     }
 
     .nav {
@@ -19,6 +53,7 @@
     .nav-list {
         flex-direction: column;
         gap: 0;
+        width: 100%;
     }
 
     .nav-link {
@@ -26,6 +61,7 @@
         padding: 1rem;
         border-bottom: 1px solid rgba(255,255,255,0.1);
         text-align: center;
+        width: 100%;
     }
 
     .mobile-menu-btn {
@@ -33,13 +69,36 @@
     }
 
     .user-menu {
-        flex-direction: column;
+        flex-direction: row;
         gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .main {
+        margin: 1rem auto;
+        padding: 0 0.75rem;
+    }
+
+    .welcome-header {
+        margin-bottom: 2rem;
+    }
+
+    .about-uci,
+    .monthly-shifts-preview {
+        padding: 1.5rem;
     }
 
     .about-content {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-card i {
+        font-size: 1.5rem;
     }
 
     .section-header {
@@ -51,11 +110,11 @@
     .controls {
         flex-direction: column;
         width: 100%;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
     .search-box {
-        width: 100%;
+        min-width: 100%;
     }
 
     .search-box input {
@@ -64,48 +123,11 @@
 
     .doctors-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
-    .calendar-month {
-        grid-template-columns: repeat(7, 1fr);
-        font-size: 0.7rem;
-    }
-
-    .calendar-day {
-        min-height: 80px;
-        padding: 0.25rem;
-    }
-
-    .shift-item {
-        font-size: 0.6rem;
-        padding: 0.1rem 0.25rem;
-    }
-
-    .admin-cards {
-        grid-template-columns: 1fr;
-    }
-
-    .modal-content {
-        margin: 5% auto;
-        width: 95%;
-        padding: 1rem;
-    }
-
-    .calendar-week {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-
-    .calendar-day-detailed {
-        grid-template-columns: 1fr;
-    }
-
-    .time-slots {
-        display: none;
+    .doctor-card {
+        padding: 1.25rem;
     }
 
     .doctor-actions {
@@ -117,6 +139,105 @@
         justify-content: center;
     }
 
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .calendar-container {
+        border-radius: 0;
+    }
+
+    .calendar-header {
+        padding: 0.75rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .view-controls {
+        justify-content: center;
+    }
+
+    #calendar-view {
+        padding: 0.75rem;
+        min-height: 500px;
+    }
+
+    .calendar-month {
+        grid-template-columns: repeat(7, 1fr);
+        font-size: 0.7rem;
+        min-width: 600px;
+    }
+
+    .calendar-day {
+        min-height: 80px;
+        padding: 0.25rem;
+    }
+
+    .calendar-day-header {
+        padding: 0.75rem;
+        font-size: 0.7rem;
+    }
+
+    .shift-item {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.25rem;
+    }
+
+    .calendar-week {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        min-width: auto;
+    }
+
+    .calendar-day-detailed {
+        grid-template-columns: 1fr;
+        min-width: auto;
+    }
+
+    .time-slots {
+        display: none;
+    }
+
+    .shifts-timeline {
+        min-height: auto;
+    }
+
+    .timeline-shift {
+        position: static;
+        margin-bottom: 0.5rem;
+        height: auto !important;
+    }
+
+    .admin-dashboard {
+        padding: 1.5rem;
+    }
+
+    .admin-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .admin-card {
+        padding: 1.5rem;
+    }
+
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .preview-day {
         min-height: 50px;
     }
@@ -124,16 +245,46 @@
     .preview-day-number {
         font-size: 0.7rem;
     }
+
+    .calendar-preview-grid {
+        min-width: 500px;
+    }
+
+    .add-doctor-card {
+        min-height: 200px;
+    }
+
+    .add-doctor-content {
+        padding: 1.5rem;
+    }
+
+    .add-doctor-content i {
+        font-size: 2rem;
+    }
 }
 
-/* Mobile */
+/* Mobile Grande */
 @media (max-width: 480px) {
+    .header-container {
+        padding: 0.5rem;
+    }
+
+    .logo {
+        flex: 1;
+    }
+
     .logo h1 {
         font-size: 1.2rem;
     }
 
     .logo i {
         font-size: 1.5rem;
+    }
+
+    .user-menu {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-end;
     }
 
     .welcome-header h2 {
@@ -147,10 +298,16 @@
     .about-uci,
     .monthly-shifts-preview {
         padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .about-uci h3,
+    .monthly-shifts-preview h3 {
+        font-size: 1.5rem;
     }
 
     .stat-card {
-        padding: 1rem;
+        padding: 0.75rem;
     }
 
     .stat-card span {
@@ -161,32 +318,41 @@
         font-size: 1.5rem;
     }
 
+    .controls {
+        gap: 0.5rem;
+    }
+
+    .search-box input {
+        padding: 0.75rem 2.5rem 0.75rem 1rem;
+    }
+
     .view-controls {
-        flex-wrap: wrap;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .view-btn {
+        flex: 1;
+        text-align: center;
         justify-content: center;
     }
 
-    .calendar-header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-
     .calendar-month {
-        grid-template-columns: repeat(7, 1fr);
-    }
-
-    .calendar-day-header {
-        padding: 0.5rem;
-        font-size: 0.7rem;
+        min-width: 450px;
+        font-size: 0.6rem;
     }
 
     .calendar-day {
         min-height: 60px;
     }
 
+    .calendar-day-header {
+        padding: 0.5rem;
+        font-size: 0.6rem;
+    }
+
     .day-number {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 
     .shift-item {
@@ -199,55 +365,60 @@
 
     .more-shifts {
         display: block;
-    }
-
-    .form-actions {
-        flex-direction: column;
-    }
-
-    .btn {
-        width: 100%;
-        justify-content: center;
+        font-size: 0.6rem;
     }
 
     .doctor-card {
         padding: 1rem;
     }
 
-    .add-doctor-card {
-        min-height: 200px;
+    .doctor-photo {
+        width: 60px;
+        height: 60px;
     }
 
-    .add-doctor-content {
+    .doctor-contact {
+        justify-content: flex-start;
+        font-size: 0.9rem;
+    }
+
+    .modal-content {
+        margin: 5% auto;
         padding: 1rem;
+        width: 98%;
     }
 
-    .add-doctor-content i {
-        font-size: 2rem;
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.5rem;
+        font-size: 0.9rem;
     }
 
-    .admin-card {
-        padding: 1.5rem;
+    .preview-day {
+        min-height: 45px;
+    }
+
+    .preview-day-number {
+        font-size: 0.6rem;
+    }
+
+    .calendar-preview-grid {
+        min-width: 400px;
+    }
+
+    #notifications {
+        right: 0.5rem;
+        left: 0.5rem;
+        max-width: none;
+    }
+
+    .notification {
+        padding: 0.75rem 1rem;
     }
 }
 
-/* Desktop grande */
-@media (min-width: 1200px) {
-    .header-container,
-    .main {
-        max-width: 1400px;
-    }
-
-    .doctors-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    }
-
-    .admin-cards {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* Pantallas muy pequeñas */
+/* Mobile Muy Pequeño */
 @media (max-width: 320px) {
     .logo h1 {
         font-size: 1rem;
@@ -257,17 +428,34 @@
         font-size: 1.5rem;
     }
 
+    .calendar-month {
+        min-width: 300px;
+    }
+
     .calendar-day {
         min-height: 50px;
+        padding: 0.1rem;
     }
 
     .day-number {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
     }
 
-    .doctor-photo {
-        width: 60px;
-        height: 60px;
+    .doctor-card {
+        padding: 0.75rem;
+    }
+
+    .doctor-actions .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .calendar-preview-grid {
+        min-width: 280px;
+    }
+
+    .preview-day {
+        min-height: 40px;
     }
 }
 
@@ -277,45 +465,39 @@
         position: static;
     }
 
+    .main {
+        margin: 0.5rem auto;
+    }
+
     .modal-content {
         margin: 1% auto;
-        max-height: 90vh;
+        max-height: 95vh;
         overflow-y: auto;
     }
 
     .calendar-day {
         min-height: 50px;
     }
-}
-
-/* Mejoras de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Alto contraste */
-@media (prefers-contrast: high) {
-    :root {
-        --primary-color: #000000;
-        --secondary-color: #0000ff;
-        --border-color: #000000;
-        --shadow: 0 2px 10px rgba(0,0,0,0.8);
-    }
 
     .doctor-card {
-        border: 2px solid var(--primary-color);
+        padding: 1rem;
     }
 
-    .shift-item {
-        border: 1px solid white;
+    .add-doctor-card {
+        min-height: 150px;
+    }
+}
+
+/* Pantallas de alta densidad */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .logo i {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
-    .preview-shift {
-        border: 1px solid white;
+    .doctor-photo img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
     }
 }
 
@@ -361,5 +543,103 @@
 
     .add-doctor-card {
         background: linear-gradient(135deg, #4a5f7a 0%, #2c3e50 100%);
+    }
+
+    .shift-legend {
+        background: #34495e;
+    }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #0000ff;
+        --border-color: #000000;
+        --shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    .doctor-card {
+        border: 2px solid var(--primary-color);
+    }
+
+    .shift-item {
+        border: 1px solid white;
+    }
+
+    .preview-shift {
+        border: 1px solid white;
+    }
+
+    .nav-link.active {
+        background-color: #000000;
+        color: #ffffff;
+    }
+}
+
+/* Impresión */
+@media print {
+    .header,
+    .user-menu,
+    .view-controls,
+    .btn,
+    .modal,
+    .mobile-menu-btn,
+    #notifications {
+        display: none !important;
+    }
+
+    .section {
+        display: block !important;
+        break-inside: avoid;
+    }
+
+    .doctor-card,
+    .calendar-container {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    .main {
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+    }
+
+    .doctors-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mejoras de rendimiento para dispositivos lentos */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Soporte para navegadores antiguos */
+@supports not (display: grid) {
+    .doctors-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .doctor-card {
+        flex: 1 1 300px;
+    }
+
+    .calendar-month {
+        display: table;
+        width: 100%;
     }
 }

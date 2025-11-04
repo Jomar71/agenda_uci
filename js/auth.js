@@ -1,4 +1,4 @@
-// Sistema de autenticación mejorado
+// Sistema de autenticación - VERSION CORREGIDA
 class AuthManager {
     constructor() {
         this.currentUser = null;
@@ -8,22 +8,24 @@ class AuthManager {
     }
 
     init() {
+        console.log('🔐 Inicializando sistema de autenticación...');
         this.checkExistingSession();
         this.setupEventListeners();
     }
 
     checkExistingSession() {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            try {
+        try {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
                 this.currentUser = JSON.parse(savedUser);
                 this.isLoggedIn = true;
                 this.userRole = this.currentUser.role;
+                console.log('✅ Sesión recuperada:', this.currentUser);
                 this.updateUI();
-            } catch (error) {
-                console.error('Error al cargar la sesión:', error);
-                this.logout();
             }
+        } catch (error) {
+            console.error('❌ Error al cargar la sesión:', error);
+            this.logout();
         }
     }
 
@@ -49,7 +51,10 @@ class AuthManager {
         // Cerrar modales
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.addEventListener('click', function() {
-                this.closest('.modal').style.display = 'none';
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
             });
         });
 
@@ -83,6 +88,8 @@ class AuthManager {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
+        console.log('🔑 Intentando login con:', username);
+
         if (!username || !password) {
             this.showNotification('Por favor ingresa usuario y contraseña', 'error');
             return;
@@ -97,6 +104,7 @@ class AuthManager {
             const doctors = window.doctorsManager?.getDoctors() || [];
             user = doctors.find(doctor => doctor.username === username);
             role = 'doctor';
+            console.log('👨‍⚕️ Buscando médico:', user);
         }
 
         if (user && user.password === password) {
@@ -184,6 +192,7 @@ class AuthManager {
         const activeSection = document.querySelector('.section.active');
         if (activeSection) {
             const sectionId = activeSection.id;
+            console.log('🔄 Refrescando sección:', sectionId);
             
             switch(sectionId) {
                 case 'medicos':
@@ -210,7 +219,10 @@ class AuthManager {
 
     showNotification(message, type = 'info') {
         const notifications = document.getElementById('notifications');
-        if (!notifications) return;
+        if (!notifications) {
+            console.error('❌ No se encontró el contenedor de notificaciones');
+            return;
+        }
 
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -227,7 +239,11 @@ class AuthManager {
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.animation = 'slideOutRight 0.3s forwards';
-                setTimeout(() => notification.remove(), 300);
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
             }
         }, 5000);
     }
@@ -252,59 +268,26 @@ class AuthManager {
 
     canEditDoctor(doctorId = null) {
         if (this.isAdmin()) return true;
-        if (this.hasRole('doctor') && doctorId === this.currentUser.id) return true;
+        if (this.hasRole('doctor') && doctorId === this.currentUser?.id) return true;
         return false;
     }
 
     canEditShift(shift) {
+        if (!shift) return false;
         if (this.isAdmin()) return true;
-        if (this.hasRole('doctor') && shift.doctorId === this.currentUser.id) return true;
+        if (this.hasRole('doctor') && shift.doctorId === this.currentUser?.id) return true;
         return false;
     }
 
     getCurrentUser() {
         return this.currentUser;
     }
+
+    // Verificar si está logueado
+    isLoggedIn() {
+        return this.isLoggedIn;
+    }
 }
 
 // Instancia global del gestor de autenticación
 const auth = new AuthManager();
-
-// Estilos para notificaciones mejoradas
-const notificationStyles = `
-@keyframes slideOutRight {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.notification.success {
-    border-left-color: #27ae60;
-    background: #d5f4e6;
-}
-
-.notification.error {
-    border-left-color: #e74c3c;
-    background: #fadbd8;
-}
-
-.notification.warning {
-    border-left-color: #f39c12;
-    background: #fef5e7;
-}
-
-.notification.info {
-    border-left-color: #3498db;
-    background: #d6eaf8;
-}
-`;
-
-// Agregar estilos al documento
-const styleSheet = document.createElement('style');
-styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet);

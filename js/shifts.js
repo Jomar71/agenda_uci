@@ -1,4 +1,4 @@
-// Gestión de turnos - VERSION MEJORADA
+// Gestión de turnos - VERSION COMPLETAMENTE CORREGIDA
 class ShiftsManager {
     constructor() {
         this.shifts = [];
@@ -8,14 +8,28 @@ class ShiftsManager {
     }
 
     init() {
+        console.log('📅 Inicializando gestor de turnos...');
         this.loadShifts();
         this.setupEventListeners();
+        this.renderCalendar();
     }
 
     setupEventListeners() {
+        console.log('🔧 Configurando eventos de turnos...');
+        
         // Navegación del calendario
-        document.getElementById('prev-period')?.addEventListener('click', () => this.navigate(-1));
-        document.getElementById('next-period')?.addEventListener('click', () => this.navigate(1));
+        const prevBtn = document.getElementById('prev-period');
+        const nextBtn = document.getElementById('next-period');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigate(-1));
+            console.log('✅ Botón anterior configurado');
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigate(1));
+            console.log('✅ Botón siguiente configurado');
+        }
         
         // Botones de vista
         document.querySelectorAll('.view-btn').forEach(btn => {
@@ -23,39 +37,74 @@ class ShiftsManager {
                 document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 this.currentView = e.target.dataset.view;
+                console.log('👁️ Cambiando vista a:', this.currentView);
                 this.renderCalendar();
             });
         });
         
         // Botón agregar turno
-        document.getElementById('add-shift-btn')?.addEventListener('click', () => this.openShiftModal());
+        const addShiftBtn = document.getElementById('add-shift-btn');
+        if (addShiftBtn) {
+            addShiftBtn.addEventListener('click', () => this.openShiftModal());
+            console.log('✅ Botón agregar turno configurado');
+        }
         
         // Formulario de turnos
-        document.getElementById('save-shift-btn')?.addEventListener('click', () => this.saveShift());
-        document.getElementById('cancel-shift-btn')?.addEventListener('click', () => this.closeShiftModal());
-        document.getElementById('delete-shift-btn')?.addEventListener('click', () => this.deleteShift());
+        const saveShiftBtn = document.getElementById('save-shift-btn');
+        const cancelShiftBtn = document.getElementById('cancel-shift-btn');
+        const deleteShiftBtn = document.getElementById('delete-shift-btn');
+        
+        if (saveShiftBtn) {
+            saveShiftBtn.addEventListener('click', () => this.saveShift());
+            console.log('✅ Botón guardar turno configurado');
+        }
+        
+        if (cancelShiftBtn) {
+            cancelShiftBtn.addEventListener('click', () => this.closeShiftModal());
+            console.log('✅ Botón cancelar turno configurado');
+        }
+        
+        if (deleteShiftBtn) {
+            deleteShiftBtn.addEventListener('click', () => this.deleteShift());
+            console.log('✅ Botón eliminar turno configurado');
+        }
         
         // Navegación desde admin
-        document.getElementById('manage-shifts')?.addEventListener('click', () => {
-            document.querySelector('[href="#turnos"]').click();
-        });
+        const manageShiftsBtn = document.getElementById('manage-shifts');
+        if (manageShiftsBtn) {
+            manageShiftsBtn.addEventListener('click', () => {
+                document.querySelector('[href="#turnos"]').click();
+            });
+        }
+        
+        // Backup de datos
+        const backupBtn = document.getElementById('backup-data');
+        if (backupBtn) {
+            backupBtn.addEventListener('click', () => this.exportToExcel());
+            console.log('✅ Botón backup configurado');
+        }
     }
 
     loadShifts() {
+        console.log('📂 Cargando turnos desde almacenamiento...');
         this.shifts = this.getShiftsFromStorage();
+        console.log(`✅ ${this.shifts.length} turnos cargados`);
     }
 
     getShiftsFromStorage() {
         try {
             const stored = localStorage.getItem('shifts');
             if (stored) {
-                return JSON.parse(stored);
+                const shifts = JSON.parse(stored);
+                console.log('📋 Turnos cargados del localStorage:', shifts.length);
+                return shifts;
             }
         } catch (error) {
-            console.error('Error cargando turnos:', error);
+            console.error('❌ Error cargando turnos:', error);
         }
         
-        // Datos de ejemplo
+        // Datos de ejemplo si no hay datos
+        console.log('📝 Creando turnos de ejemplo...');
         const today = new Date();
         const sampleShifts = [];
         
@@ -82,6 +131,8 @@ class ShiftsManager {
             }
         }
         
+        // Guardar datos de ejemplo
+        this.saveShifts(sampleShifts);
         return sampleShifts;
     }
 
@@ -89,15 +140,18 @@ class ShiftsManager {
         const shifts = shiftsToSave || this.shifts;
         try {
             localStorage.setItem('shifts', JSON.stringify(shifts));
+            console.log('💾 Turnos guardados en localStorage:', shifts.length);
             return true;
         } catch (error) {
-            console.error('Error guardando turnos:', error);
+            console.error('❌ Error guardando turnos:', error);
             auth.showNotification('Error al guardar los turnos', 'error');
             return false;
         }
     }
 
     navigate(direction) {
+        console.log('🧭 Navegando calendario:', direction);
+        
         switch(this.currentView) {
             case 'month':
                 this.currentDate.setMonth(this.currentDate.getMonth() + direction);
@@ -116,7 +170,12 @@ class ShiftsManager {
         const container = document.getElementById('calendar-view');
         const period = document.getElementById('current-period');
         
-        if (!container) return;
+        if (!container) {
+            console.error('❌ No se encontró el contenedor del calendario');
+            return;
+        }
+
+        console.log('🎨 Renderizando calendario vista:', this.currentView);
 
         let html = '';
         let periodText = '';
@@ -146,6 +205,7 @@ class ShiftsManager {
         if (period) period.textContent = periodText;
         
         this.attachCalendarEvents();
+        console.log('✅ Calendario renderizado correctamente');
     }
 
     renderMonthView() {
@@ -294,6 +354,8 @@ class ShiftsManager {
     }
 
     attachCalendarEvents() {
+        console.log('🔗 Adjuntando eventos al calendario...');
+        
         // Click en días para crear turnos (solo usuarios logueados)
         document.querySelectorAll('.calendar-day').forEach(day => {
             day.addEventListener('click', (e) => {
@@ -302,7 +364,10 @@ class ShiftsManager {
                     
                     const date = day.dataset.date;
                     if (date && auth.isLoggedIn) {
+                        console.log('📅 Creando turno para fecha:', date);
                         this.openShiftModal(null, date);
+                    } else if (!auth.isLoggedIn) {
+                        auth.showNotification('Debe iniciar sesión para crear turnos', 'warning');
                     }
                 }
             });
@@ -313,11 +378,20 @@ class ShiftsManager {
             shift.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const shiftId = parseInt(shift.dataset.id);
-                if (shiftId && auth.canEditShift(this.getShiftById(shiftId))) {
+                const shiftData = this.getShiftById(shiftId);
+                
+                if (shiftId && shiftData && auth.canEditShift(shiftData)) {
+                    console.log('✏️ Editando turno:', shiftId);
                     this.openShiftModal(shiftId);
+                } else if (!auth.isLoggedIn) {
+                    auth.showNotification('Debe iniciar sesión para editar turnos', 'warning');
+                } else if (!auth.canEditShift(shiftData)) {
+                    auth.showNotification('No tiene permisos para editar este turno', 'error');
                 }
             });
         });
+        
+        console.log('✅ Eventos del calendario configurados');
     }
 
     openShiftModal(shiftId = null, date = null) {
@@ -330,7 +404,10 @@ class ShiftsManager {
         const title = document.getElementById('shift-modal-title');
         const deleteBtn = document.getElementById('delete-shift-btn');
         
-        if (!modal || !title) return;
+        if (!modal || !title) {
+            console.error('❌ No se encontró el modal de turnos');
+            return;
+        }
 
         this.populateDoctorsSelect();
 
@@ -348,6 +425,7 @@ class ShiftsManager {
                 if (deleteBtn && auth.isAdmin()) {
                     deleteBtn.style.display = 'inline-block';
                 }
+                console.log('📝 Abriendo modal para editar turno:', shiftId);
             }
         } else {
             // Nuevo turno
@@ -356,6 +434,7 @@ class ShiftsManager {
             if (deleteBtn) {
                 deleteBtn.style.display = 'none';
             }
+            console.log('🆕 Abriendo modal para nuevo turno');
         }
 
         modal.style.display = 'block';
@@ -366,6 +445,7 @@ class ShiftsManager {
         if (modal) {
             modal.style.display = 'none';
         }
+        console.log('📭 Modal de turno cerrado');
     }
 
     populateDoctorsSelect() {
@@ -381,6 +461,8 @@ class ShiftsManager {
             option.textContent = `${doctor.name} - ${doctor.specialty}`;
             select.appendChild(option);
         });
+        
+        console.log('✅ Selector de médicos poblado:', doctors.length, 'médicos');
     }
 
     fillShiftForm(shift) {
@@ -409,9 +491,11 @@ class ShiftsManager {
     }
 
     saveShift() {
+        console.log('💾 Intentando guardar turno...');
         const formData = this.getShiftFormData();
         
         if (!this.validateShift(formData)) {
+            console.error('❌ Validación de turno falló');
             return;
         }
 
@@ -455,6 +539,7 @@ class ShiftsManager {
             if (index !== -1) {
                 this.shifts[index] = shiftData;
                 successMessage = 'Turno actualizado correctamente';
+                console.log('✅ Turno actualizado:', shiftData.id);
             }
         } else {
             // Nuevo turno
@@ -462,12 +547,15 @@ class ShiftsManager {
             shiftData.createdAt = new Date().toISOString();
             this.shifts.push(shiftData);
             successMessage = 'Turno creado correctamente';
+            console.log('✅ Nuevo turno creado:', shiftData.id);
         }
 
         if (this.saveShifts()) {
             this.renderCalendar();
             this.closeShiftModal();
             auth.showNotification(successMessage, 'success');
+        } else {
+            auth.showNotification('Error al guardar el turno', 'error');
         }
     }
 
@@ -484,10 +572,15 @@ class ShiftsManager {
     }
 
     validateShift(data) {
+        console.log('🔍 Validando turno...', data);
+        
         // Validar campos requeridos
-        if (!data.doctorId || !data.date || !data.type || !data.startTime || !data.endTime) {
-            auth.showNotification('Complete todos los campos requeridos', 'error');
-            return false;
+        const requiredFields = ['doctorId', 'date', 'type', 'startTime', 'endTime'];
+        for (const field of requiredFields) {
+            if (!data[field]) {
+                auth.showNotification(`El campo ${field} es requerido`, 'error');
+                return false;
+            }
         }
 
         // Validar que la hora de fin sea posterior a la de inicio
@@ -516,6 +609,7 @@ class ShiftsManager {
             }
         }
 
+        console.log('✅ Validación de turno exitosa');
         return true;
     }
 
@@ -530,10 +624,16 @@ class ShiftsManager {
         }
 
         const shiftId = document.getElementById('shift-id').value;
-        if (!shiftId) return;
+        if (!shiftId) {
+            console.error('❌ ID de turno no válido para eliminar');
+            return;
+        }
 
         const shift = this.getShiftById(parseInt(shiftId));
-        if (!shift) return;
+        if (!shift) {
+            auth.showNotification('Turno no encontrado', 'error');
+            return;
+        }
 
         if (confirm(`¿Estás seguro de eliminar el turno del ${this.formatDate(new Date(shift.date))}?`)) {
             this.shifts = this.shifts.filter(s => s.id !== parseInt(shiftId));
@@ -542,6 +642,7 @@ class ShiftsManager {
                 this.renderCalendar();
                 this.closeShiftModal();
                 auth.showNotification('Turno eliminado correctamente', 'success');
+                console.log('✅ Turno eliminado:', shiftId);
             }
         }
     }
@@ -606,6 +707,7 @@ class ShiftsManager {
 
     // Método para generar reporte de horas
     generateHoursReport(startDate, endDate) {
+        console.log('📊 Generando reporte de horas...');
         const doctors = window.doctorsManager?.getDoctors() || [];
         const report = {
             period: `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`,
@@ -680,16 +782,18 @@ class ShiftsManager {
             report.totals.total += doctorReport.hours.total;
         });
         
+        console.log('✅ Reporte generado:', report.doctors.length, 'médicos');
         return report;
     }
 
-    // Método para exportar a Excel
+    // Método para exportar a Excel - CORREGIDO
     exportToExcel() {
         if (!auth.isAdmin()) {
             auth.showNotification('Solo los administradores pueden descargar backups', 'error');
             return;
         }
 
+        console.log('📥 Iniciando descarga de backup...');
         const now = new Date();
         const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -712,28 +816,27 @@ class ShiftsManager {
         // Totales
         csvContent += `\n"TOTALES","",${report.totals.daily.toFixed(2)},${report.totals.weekly.toFixed(2)},${report.totals.monthly.toFixed(2)},${report.totals.sunday.toFixed(2)},${report.totals.holiday.toFixed(2)},${report.totals.total.toFixed(2)},\n`;
         
-        // Crear y descargar archivo
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', `reporte_horas_medicas_${now.toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        auth.showNotification('Reporte descargado correctamente en formato Excel', 'success');
+        // Crear y descargar archivo - CORREGIDO
+        try {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            link.href = url;
+            link.download = `reporte_horas_medicas_${now.toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Backup descargado correctamente');
+            auth.showNotification('Reporte descargado correctamente en formato Excel', 'success');
+        } catch (error) {
+            console.error('❌ Error al descargar backup:', error);
+            auth.showNotification('Error al descargar el reporte', 'error');
+        }
     }
 }
 
 // Instancia global
 const shiftsManager = new ShiftsManager();
-
-// Configurar el botón de backup
-document.getElementById('backup-data')?.addEventListener('click', () => {
-    shiftsManager.exportToExcel();
-});
