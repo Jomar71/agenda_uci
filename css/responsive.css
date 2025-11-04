@@ -2,6 +2,7 @@
 @media (max-width: 768px) {
     .header-container {
         flex-wrap: wrap;
+        padding: 0.5rem;
     }
 
     .nav {
@@ -24,23 +25,37 @@
         display: block;
         padding: 1rem;
         border-bottom: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
     }
 
     .mobile-menu-btn {
         display: block;
     }
 
+    .user-menu {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
     .about-content {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .section-header {
         flex-direction: column;
         align-items: stretch;
+        gap: 1rem;
     }
 
     .controls {
-        justify-content: space-between;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .search-box {
+        width: 100%;
     }
 
     .search-box input {
@@ -57,7 +72,7 @@
 
     .calendar-month {
         grid-template-columns: repeat(7, 1fr);
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 
     .calendar-day {
@@ -66,7 +81,7 @@
     }
 
     .shift-item {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
         padding: 0.1rem 0.25rem;
     }
 
@@ -75,9 +90,39 @@
     }
 
     .modal-content {
-        margin: 10% auto;
+        margin: 5% auto;
         width: 95%;
-        padding: 1.5rem;
+        padding: 1rem;
+    }
+
+    .calendar-week {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .calendar-day-detailed {
+        grid-template-columns: 1fr;
+    }
+
+    .time-slots {
+        display: none;
+    }
+
+    .doctor-actions {
+        flex-direction: column;
+    }
+
+    .doctor-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .preview-day {
+        min-height: 50px;
+    }
+
+    .preview-day-number {
+        font-size: 0.7rem;
     }
 }
 
@@ -87,8 +132,29 @@
         font-size: 1.2rem;
     }
 
+    .logo i {
+        font-size: 1.5rem;
+    }
+
     .welcome-header h2 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+    }
+
+    .welcome-header p {
+        font-size: 1rem;
+    }
+
+    .about-uci,
+    .monthly-shifts-preview {
+        padding: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-card span {
+        font-size: 1.5rem;
     }
 
     .section-header h2 {
@@ -100,8 +166,18 @@
         justify-content: center;
     }
 
+    .calendar-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
     .calendar-month {
         grid-template-columns: repeat(7, 1fr);
+    }
+
+    .calendar-day-header {
+        padding: 0.5rem;
         font-size: 0.7rem;
     }
 
@@ -113,6 +189,18 @@
         font-size: 0.8rem;
     }
 
+    .shift-item {
+        display: none;
+    }
+
+    .shift-item:first-child {
+        display: block;
+    }
+
+    .more-shifts {
+        display: block;
+    }
+
     .form-actions {
         flex-direction: column;
     }
@@ -121,9 +209,29 @@
         width: 100%;
         justify-content: center;
     }
+
+    .doctor-card {
+        padding: 1rem;
+    }
+
+    .add-doctor-card {
+        min-height: 200px;
+    }
+
+    .add-doctor-content {
+        padding: 1rem;
+    }
+
+    .add-doctor-content i {
+        font-size: 2rem;
+    }
+
+    .admin-card {
+        padding: 1.5rem;
+    }
 }
 
-/* Large Desktop */
+/* Desktop grande */
 @media (min-width: 1200px) {
     .header-container,
     .main {
@@ -133,32 +241,125 @@
     .doctors-grid {
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     }
-}
 
-/* High DPI Screens */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .logo i {
-        -webkit-font-smoothing: antialiased;
+    .admin-cards {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* Print Styles */
-@media print {
-    .header,
-    .user-menu,
-    .view-controls,
-    .btn {
-        display: none !important;
+/* Pantallas muy pequeñas */
+@media (max-width: 320px) {
+    .logo h1 {
+        font-size: 1rem;
     }
 
-    .section {
-        display: block !important;
+    .welcome-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .calendar-day {
+        min-height: 50px;
+    }
+
+    .day-number {
+        font-size: 0.7rem;
+    }
+
+    .doctor-photo {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Orientación landscape para móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        position: static;
+    }
+
+    .modal-content {
+        margin: 1% auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .calendar-day {
+        min-height: 50px;
+    }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #0000ff;
+        --border-color: #000000;
+        --shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    .doctor-card {
+        border: 2px solid var(--primary-color);
+    }
+
+    .shift-item {
+        border: 1px solid white;
+    }
+
+    .preview-shift {
+        border: 1px solid white;
+    }
+}
+
+/* Modo oscuro automático */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: #ffffff;
+        --light-color: #2c3e50;
+        --border-color: #34495e;
+    }
+
+    body {
+        background-color: #1a1a1a;
+        color: var(--text-color);
     }
 
     .doctor-card,
-    .calendar-container {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #000;
+    .about-uci,
+    .monthly-shifts-preview,
+    .calendar-container,
+    .admin-dashboard,
+    .modal-content {
+        background-color: #2c3e50;
+        color: white;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .search-box input {
+        background-color: #34495e;
+        color: white;
+        border-color: #4a5f7a;
+    }
+
+    .calendar-day.other-month {
+        background-color: #253341;
+    }
+
+    .preview-day.other-month {
+        background-color: #253341;
+    }
+
+    .add-doctor-card {
+        background: linear-gradient(135deg, #4a5f7a 0%, #2c3e50 100%);
     }
 }

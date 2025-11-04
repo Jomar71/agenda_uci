@@ -1,78 +1,120 @@
-// Gestión de médicos - VERSION CORREGIDA
+// Gestión de médicos - VERSION MEJORADA
 class DoctorsManager {
     constructor() {
+        this.doctors = [];
         this.currentPhoto = null;
         this.init();
     }
 
     init() {
         this.loadDoctors();
-        this.setupSearch();
-        this.setupAddButton();
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Botones del formulario de médico
+        document.getElementById('save-doctor-btn')?.addEventListener('click', () => this.saveDoctor());
+        document.getElementById('cancel-doctor-btn')?.addEventListener('click', () => this.closeDoctorModal());
+        
+        // Subida de foto
+        document.getElementById('doctor-photo')?.addEventListener('change', (e) => this.handlePhotoUpload(e));
+        
+        // Búsqueda y filtros
+        document.getElementById('doctor-search')?.addEventListener('input', () => this.filterDoctors());
+        document.getElementById('specialty-filter')?.addEventListener('change', () => this.filterDoctors());
+        
+        // Navegación desde admin
+        document.getElementById('manage-doctors')?.addEventListener('click', () => {
+            document.querySelector('[href="#medicos"]').click();
+        });
     }
 
     loadDoctors() {
-        const doctors = storage.getDoctors();
-        this.renderDoctors(doctors);
+        this.doctors = this.getDoctorsFromStorage();
+        this.updateSpecialtyFilter();
+        this.renderDoctors();
         this.updateStats();
     }
 
-    renderDoctors(doctors) {
+    getDoctorsFromStorage() {
+        try {
+            const stored = localStorage.getItem('doctors');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (error) {
+            console.error('Error cargando médicos:', error);
+        }
+        
+        // Datos de ejemplo
+        return [
+            {
+                id: 1,
+                name: 'Dr. Carlos Rodríguez',
+                specialty: 'Cardiología',
+                email: 'c.rodriguez@uci.com',
+                phone: '+34 600 111 222',
+                username: 'crodriguez',
+                password: 'doctor123',
+                photo: null,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 2,
+                name: 'Dra. María López',
+                specialty: 'Neurología',
+                email: 'm.lopez@uci.com',
+                phone: '+34 600 333 444',
+                username: 'mlopez',
+                password: 'doctor123',
+                photo: null,
+                createdAt: new Date().toISOString()
+            }
+        ];
+    }
+
+    saveDoctorsToStorage() {
+        try {
+            localStorage.setItem('doctors', JSON.stringify(this.doctors));
+            return true;
+        } catch (error) {
+            console.error('Error guardando médicos:', error);
+            auth.showNotification('Error al guardar los datos', 'error');
+            return false;
+        }
+    }
+
+    renderDoctors(doctorsToRender = null) {
         const grid = document.getElementById('doctors-grid');
         if (!grid) return;
 
+        const doctors = doctorsToRender || this.doctors;
         let html = '';
 
         if (doctors.length === 0) {
             html = `
-                <div class="text-center" style="grid-column: 1/-1; padding: 2rem;">
-                    <p>No hay médicos registrados.</p>
-                    ${auth.isLoggedIn && auth.userRole === 'admin' ? 
-                        '<button class="btn btn-primary mt-1" onclick="doctors.openDoctorModal()">Agregar Primer Médico</button>' : 
-                        ''
+                <div class="no-doctors" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                    <i class="fas fa-user-md" style="font-size: 3rem; color: #bdc3c7; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #7f8c8d; margin-bottom: 1rem;">No hay médicos registrados</h3>
+                    ${auth.isAdmin() ? 
+                        '<button class="btn btn-primary" onclick="doctorsManager.openDoctorModal()">Agregar Primer Médico</button>' : 
+                        '<p style="color: #95a5a6;">Contacte al administrador para agregar médicos</p>'
                     }
                 </div>
             `;
         } else {
-            // MOSTRAR MÉDICOS EXISTENTES
-            html = doctors.map(doctor => `
-                <div class="doctor-card">
-                    <div class="doctor-photo">
-                        <img src="${doctor.photo}" alt="${doctor.name}" 
-                             onerror="this.src='assets/images/default-doctor.jpg'">
-                    </div>
-                    <h3>${doctor.name}</h3>
-                    <span class="doctor-specialty">${doctor.specialty}</span>
-                    <div class="doctor-contact">
-                        <i class="fas fa-envelope"></i> ${doctor.email}
-                    </div>
-                    <div class="doctor-contact">
-                        <i class="fas fa-phone"></i> ${doctor.phone}
-                    </div>
-                    <div class="doctor-actions">
-                        <button class="btn btn-primary" onclick="doctors.viewShifts(${doctor.id})">
-                            <i class="fas fa-calendar"></i> Ver Turnos
-                        </button>
-                        ${auth.isLoggedIn && auth.userRole === 'admin' ? `
-                            <button class="btn btn-secondary" onclick="doctors.openDoctorModal(${doctor.id})">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button class="btn btn-danger" onclick="doctors.deleteDoctor(${doctor.id})">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
+            doctors.forEach(doctor => {
+                html += this.createDoctorCard(doctor);
+            });
 
-            // AGREGAR BOTÓN PARA NUEVO MÉDICO (SOLO ADMIN)
-            if (auth.isLoggedIn && auth.userRole === 'admin') {
+            // Botón para agregar médico (solo admin)
+            if (auth.isAdmin()) {
                 html += `
-                    <div class="doctor-card add-doctor-card" onclick="doctors.openDoctorModal()">
+                    <div class="doctor-card add-doctor-card" onclick="doctorsManager.openDoctorModal()">
                         <div class="add-doctor-content">
-                            <i class="fas fa-plus-circle"></i>
+                            <i class="fas fa-user-plus"></i>
                             <h3>Agregar Médico</h3>
-                            <p>Click para agregar un nuevo médico al sistema</p>
+                            <p>Click para agregar un nuevo médico</p>
                         </div>
                     </div>
                 `;
@@ -80,91 +122,76 @@ class DoctorsManager {
         }
 
         grid.innerHTML = html;
+        this.attachCardEvents();
     }
 
-    setupAddButton() {
-        // El botón ahora se renderiza dinámicamente en renderDoctors
-    }
+    createDoctorCard(doctor) {
+        const photoHTML = doctor.photo ? 
+            `<img src="${doctor.photo}" alt="${doctor.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNlY2YwZjEiLz4KPHBhdGggZD0iTTQwIDQ0QzQ0LjQxODMgNDQgNDggNDAuNDE4MyA0OCAzNkM0OCAzMS41ODE3IDQ0LjQxODMgMjggNDAgMjhDMzUuNTgxNyAyOCAzMiAzMS41ODE3IDMyIDM2QzMyIDQwLjQxODMgMzUuNTgxNyA0NCA0MCA0NFoiIGZpbGw9IiM5NWExYTYiLz4KPHBhdGggZD0iTTUyIDUyQzUyIDU2LjQxODMgNDYuNDE4MyA2MCA0MCA2MEMzMy41ODE3IDYwIDI4IDU2LjQxODMgMjggNTJWMzJINTJWNTJaIiBmaWxsPSIjOTVhMWE2Ii8+Cjwvc3ZnPgo='">` :
+            `<i class="fas fa-user-md"></i>`;
 
-    setupSearch() {
-        const search = document.getElementById('doctor-search');
-        const filter = document.getElementById('specialty-filter');
-
-        if (search) {
-            search.addEventListener('input', (e) => {
-                this.filterDoctors(e.target.value, filter?.value);
-            });
-        }
-
-        if (filter) {
-            filter.addEventListener('change', (e) => {
-                this.filterDoctors(search?.value, e.target.value);
-            });
-        }
-    }
-
-    filterDoctors(searchTerm = '', specialty = '') {
-        const doctors = storage.getDoctors();
-        const filtered = doctors.filter(doctor => {
-            const matchesSearch = !searchTerm || 
-                doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesSpecialty = !specialty || doctor.specialty === specialty;
-            return matchesSearch && matchesSpecialty;
-        });
-        
-        const grid = document.getElementById('doctors-grid');
-        if (!grid) return;
-
-        let html = filtered.map(doctor => `
-            <div class="doctor-card">
+        return `
+            <div class="doctor-card" data-id="${doctor.id}">
                 <div class="doctor-photo">
-                    <img src="${doctor.photo}" alt="${doctor.name}" 
-                         onerror="this.src='assets/images/default-doctor.jpg'">
+                    ${photoHTML}
                 </div>
                 <h3>${doctor.name}</h3>
                 <span class="doctor-specialty">${doctor.specialty}</span>
                 <div class="doctor-contact">
-                    <i class="fas fa-envelope"></i> ${doctor.email}
+                    <i class="fas fa-envelope"></i>
+                    <span>${doctor.email}</span>
                 </div>
                 <div class="doctor-contact">
-                    <i class="fas fa-phone"></i> ${doctor.phone}
+                    <i class="fas fa-phone"></i>
+                    <span>${doctor.phone}</span>
                 </div>
                 <div class="doctor-actions">
-                    <button class="btn btn-primary" onclick="doctors.viewShifts(${doctor.id})">
+                    <button class="btn btn-primary view-shifts-btn" data-id="${doctor.id}">
                         <i class="fas fa-calendar"></i> Ver Turnos
                     </button>
-                    ${auth.isLoggedIn && auth.userRole === 'admin' ? `
-                        <button class="btn btn-secondary" onclick="doctors.openDoctorModal(${doctor.id})">
+                    ${auth.isAdmin() ? `
+                        <button class="btn btn-secondary edit-doctor-btn" data-id="${doctor.id}">
                             <i class="fas fa-edit"></i> Editar
                         </button>
-                        <button class="btn btn-danger" onclick="doctors.deleteDoctor(${doctor.id})">
+                        <button class="btn btn-danger delete-doctor-btn" data-id="${doctor.id}">
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
                     ` : ''}
                 </div>
             </div>
-        `).join('');
+        `;
+    }
 
-        // Agregar botón de "Agregar Médico" incluso cuando hay filtros (solo admin)
-        if (auth.isLoggedIn && auth.userRole === 'admin') {
-            html += `
-                <div class="doctor-card add-doctor-card" onclick="doctors.openDoctorModal()">
-                    <div class="add-doctor-content">
-                        <i class="fas fa-plus-circle"></i>
-                        <h3>Agregar Médico</h3>
-                        <p>Click para agregar un nuevo médico al sistema</p>
-                    </div>
-                </div>
-            `;
+    attachCardEvents() {
+        // Botón ver turnos
+        document.querySelectorAll('.view-shifts-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const doctorId = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
+                this.viewDoctorShifts(doctorId);
+            });
+        });
+
+        // Botón editar (solo admin)
+        if (auth.isAdmin()) {
+            document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const doctorId = parseInt(e.target.closest('.edit-doctor-btn').dataset.id);
+                    this.openDoctorModal(doctorId);
+                });
+            });
+
+            document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const doctorId = parseInt(e.target.closest('.delete-doctor-btn').dataset.id);
+                    this.deleteDoctor(doctorId);
+                });
+            });
         }
-
-        grid.innerHTML = html;
     }
 
     openDoctorModal(doctorId = null) {
-        if (!auth.isLoggedIn || auth.userRole !== 'admin') {
-            this.showNotification('Solo administradores pueden gestionar médicos', 'error');
+        if (!auth.isAdmin()) {
+            auth.showNotification('Solo los administradores pueden gestionar médicos', 'error');
             return;
         }
 
@@ -178,7 +205,7 @@ class DoctorsManager {
 
         if (doctorId) {
             // Modo edición
-            const doctor = storage.getDoctors().find(d => d.id === doctorId);
+            const doctor = this.doctors.find(d => d.id === doctorId);
             if (doctor) {
                 title.textContent = 'Editar Médico';
                 this.fillForm(doctor);
@@ -192,6 +219,14 @@ class DoctorsManager {
         modal.style.display = 'block';
     }
 
+    closeDoctorModal() {
+        const modal = document.getElementById('doctor-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.currentPhoto = null;
+    }
+
     fillForm(doctor) {
         document.getElementById('doctor-id').value = doctor.id;
         document.getElementById('doctor-name').value = doctor.name;
@@ -201,6 +236,7 @@ class DoctorsManager {
         document.getElementById('doctor-username').value = doctor.username;
         document.getElementById('doctor-password').value = '';
         document.getElementById('doctor-password').placeholder = 'Dejar vacío para no cambiar';
+        document.getElementById('doctor-password').required = false;
         
         // Mostrar foto actual
         this.updatePhotoPreview(doctor.photo);
@@ -211,26 +247,58 @@ class DoctorsManager {
         document.getElementById('doctor-id').value = '';
         document.getElementById('doctor-password').placeholder = 'Contraseña requerida';
         document.getElementById('doctor-password').required = true;
-        this.updatePhotoPreview('assets/images/default-doctor.jpg');
+        this.updatePhotoPreview(null);
     }
 
     updatePhotoPreview(photoUrl) {
         const preview = document.getElementById('doctor-photo-preview');
-        if (preview) {
-            preview.innerHTML = `<img src="${photoUrl}" alt="Preview" style="max-width: 150px; border-radius: 10px;">`;
+        if (!preview) return;
+
+        if (photoUrl) {
+            preview.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="${photoUrl}" alt="Foto actual" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db;">
+                    <small>Foto actual</small>
+                </div>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div style="color: #95a5a6; text-align: center; padding: 1rem;">
+                    <i class="fas fa-user-md" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                    <div>No hay foto seleccionada</div>
+                </div>
+            `;
         }
     }
 
     handlePhotoUpload(event) {
         const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.currentPhoto = e.target.result;
-                this.updatePhotoPreview(this.currentPhoto);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image/')) {
+            auth.showNotification('Por favor selecciona un archivo de imagen válido', 'error');
+            event.target.value = '';
+            return;
         }
+
+        // Validar tamaño (máximo 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            auth.showNotification('La imagen debe ser menor a 2MB', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.currentPhoto = e.target.result;
+            this.updatePhotoPreview(this.currentPhoto);
+        };
+        reader.onerror = () => {
+            auth.showNotification('Error al leer la imagen', 'error');
+            event.target.value = '';
+        };
+        reader.readAsDataURL(file);
     }
 
     saveDoctor() {
@@ -241,12 +309,11 @@ class DoctorsManager {
         }
 
         const doctorData = {
-            id: formData.id ? parseInt(formData.id) : null,
-            name: formData.name,
-            specialty: formData.specialty,
-            email: formData.email,
-            phone: formData.phone,
-            username: formData.username
+            name: formData.name.trim(),
+            specialty: formData.specialty.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            username: formData.username.trim()
         };
 
         // Manejar contraseña
@@ -257,19 +324,43 @@ class DoctorsManager {
         // Manejar foto
         if (this.currentPhoto) {
             doctorData.photo = this.currentPhoto;
+        } else if (formData.id) {
+            // Mantener foto existente si estamos editando
+            const existingDoctor = this.doctors.find(d => d.id === parseInt(formData.id));
+            doctorData.photo = existingDoctor?.photo || null;
         }
 
-        const saved = storage.saveDoctor(doctorData);
-        if (saved) {
+        let successMessage = '';
+
+        if (formData.id) {
+            // Actualizar médico existente
+            const index = this.doctors.findIndex(d => d.id === parseInt(formData.id));
+            if (index !== -1) {
+                doctorData.id = parseInt(formData.id);
+                doctorData.createdAt = this.doctors[index].createdAt;
+                
+                // Mantener contraseña si no se cambió
+                if (!formData.password) {
+                    doctorData.password = this.doctors[index].password;
+                }
+                
+                this.doctors[index] = doctorData;
+                successMessage = 'Médico actualizado correctamente';
+            }
+        } else {
+            // Crear nuevo médico
+            doctorData.id = this.generateDoctorId();
+            doctorData.createdAt = new Date().toISOString();
+            this.doctors.push(doctorData);
+            successMessage = 'Médico creado correctamente';
+        }
+
+        if (this.saveDoctorsToStorage()) {
             this.loadDoctors();
             this.closeDoctorModal();
-            this.showNotification(
-                formData.id ? 'Médico actualizado' : 'Médico creado', 
-                'success'
-            );
+            auth.showNotification(successMessage, 'success');
             return true;
         } else {
-            this.showNotification('Error al guardar', 'error');
             return false;
         }
     }
@@ -287,21 +378,31 @@ class DoctorsManager {
     }
 
     validateForm(data) {
+        // Validar campos requeridos
         if (!data.name || !data.specialty || !data.email || !data.phone || !data.username) {
-            this.showNotification('Todos los campos son requeridos', 'error');
+            auth.showNotification('Todos los campos son requeridos', 'error');
             return false;
         }
 
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            auth.showNotification('Por favor ingresa un email válido', 'error');
+            return false;
+        }
+
+        // Para nuevos médicos, validar contraseña
         if (!data.id && !data.password) {
-            this.showNotification('La contraseña es requerida para nuevos médicos', 'error');
+            auth.showNotification('La contraseña es requerida para nuevos médicos', 'error');
             return false;
         }
 
         // Verificar username único
-        const doctors = storage.getDoctors();
-        const existing = doctors.find(d => d.username === data.username && d.id !== parseInt(data.id));
-        if (existing) {
-            this.showNotification('El nombre de usuario ya existe', 'error');
+        const existingDoctor = this.doctors.find(d => 
+            d.username === data.username && d.id !== parseInt(data.id)
+        );
+        if (existingDoctor) {
+            auth.showNotification('El nombre de usuario ya está en uso', 'error');
             return false;
         }
 
@@ -309,57 +410,112 @@ class DoctorsManager {
     }
 
     deleteDoctor(id) {
-        if (!auth.isLoggedIn || auth.userRole !== 'admin') {
-            this.showNotification('No tiene permisos', 'error');
+        if (!auth.isAdmin()) {
+            auth.showNotification('No tiene permisos para eliminar médicos', 'error');
             return;
         }
 
-        if (confirm('¿Eliminar este médico y todos sus turnos?')) {
-            storage.deleteDoctor(id);
-            this.loadDoctors();
-            this.showNotification('Médico eliminado', 'success');
+        const doctor = this.doctors.find(d => d.id === id);
+        if (!doctor) return;
+
+        // Verificar si el médico tiene turnos
+        const shifts = window.shiftsManager?.getShifts() || [];
+        const doctorShifts = shifts.filter(shift => shift.doctorId === id);
+
+        let confirmMessage = `¿Estás seguro de eliminar al Dr. ${doctor.name}?`;
+        if (doctorShifts.length > 0) {
+            confirmMessage += `\n\nEste médico tiene ${doctorShifts.length} turno(s) asignado(s) que también serán eliminados.`;
+        }
+
+        if (confirm(confirmMessage)) {
+            // Eliminar médico
+            this.doctors = this.doctors.filter(d => d.id !== id);
+            
+            // Eliminar turnos del médico si existe el gestor de turnos
+            if (window.shiftsManager && doctorShifts.length > 0) {
+                const updatedShifts = shifts.filter(shift => shift.doctorId !== id);
+                window.shiftsManager.saveShifts(updatedShifts);
+            }
+
+            if (this.saveDoctorsToStorage()) {
+                this.loadDoctors();
+                auth.showNotification('Médico eliminado correctamente', 'success');
+            }
         }
     }
 
-    viewShifts(doctorId) {
-        app.showSection('turnos');
-        this.showNotification('Vista de turnos del médico');
+    viewDoctorShifts(doctorId) {
+        // Navegar a la sección de turnos y filtrar por médico
+        document.querySelector('[href="#turnos"]').click();
+        
+        // Aquí podrías implementar un filtro específico para el médico
+        auth.showNotification(`Mostrando turnos del médico seleccionado`, 'info');
+        
+        // En una implementación más avanzada, aquí filtrarías el calendario
+        // para mostrar solo los turnos de este médico
     }
 
-    closeDoctorModal() {
-        const modal = document.getElementById('doctor-modal');
-        if (modal) {
-            modal.style.display = 'none';
+    filterDoctors() {
+        const searchTerm = document.getElementById('doctor-search')?.value.toLowerCase() || '';
+        const specialty = document.getElementById('specialty-filter')?.value || '';
+
+        const filtered = this.doctors.filter(doctor => {
+            const matchesSearch = doctor.name.toLowerCase().includes(searchTerm) ||
+                                doctor.specialty.toLowerCase().includes(searchTerm) ||
+                                doctor.email.toLowerCase().includes(searchTerm);
+            const matchesSpecialty = !specialty || doctor.specialty === specialty;
+            
+            return matchesSearch && matchesSpecialty;
+        });
+
+        this.renderDoctors(filtered);
+    }
+
+    updateSpecialtyFilter() {
+        const filter = document.getElementById('specialty-filter');
+        if (!filter) return;
+
+        const specialties = [...new Set(this.doctors.map(doctor => doctor.specialty))];
+        const currentValue = filter.value;
+
+        filter.innerHTML = '<option value="">Todas las especialidades</option>';
+        specialties.forEach(specialty => {
+            const option = document.createElement('option');
+            option.value = specialty;
+            option.textContent = specialty;
+            filter.appendChild(option);
+        });
+
+        // Restaurar valor anterior si existe
+        if (currentValue && specialties.includes(currentValue)) {
+            filter.value = currentValue;
         }
-        this.currentPhoto = null;
+    }
+
+    generateDoctorId() {
+        const maxId = this.doctors.reduce((max, doctor) => Math.max(max, doctor.id), 0);
+        return maxId + 1;
     }
 
     updateStats() {
-        const stats = storage.getStatistics();
         const element = document.getElementById('total-doctors');
         if (element) {
-            element.textContent = stats.totalDoctors;
+            element.textContent = this.doctors.length;
         }
     }
 
-    showNotification(message, type = 'info') {
-        // Notificación simple
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background: ${type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#3498db'};
-            color: white;
-            border-radius: 5px;
-            z-index: 1000;
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.remove(), 3000);
+    getDoctors() {
+        return this.doctors;
+    }
+
+    getDoctorById(id) {
+        return this.doctors.find(doctor => doctor.id === id);
+    }
+
+    getDoctorByUsername(username) {
+        return this.doctors.find(doctor => doctor.username === username);
     }
 }
 
-const doctors = new DoctorsManager();
+// Instancia global
+const doctorsManager = new DoctorsManager();

@@ -1,254 +1,151 @@
-// Sistema de almacenamiento local con sincronización mejorada
-class StorageManager {
-    constructor() {
-        this.keys = {
-            DOCTORS: 'doctors',
-            SHIFTS: 'shifts', 
-            ADMINS: 'admins',
-            SETTINGS: 'settings',
-            LAST_SYNC: 'last_sync'
-        };
-        this.init();
-    }
+// Utilidades de almacenamiento y datos
 
-    init() {
-        // Datos iniciales
-        if (!this.get(this.keys.DOCTORS)) {
-            this.set(this.keys.DOCTORS, []);
-        }
-        if (!this.get(this.keys.SHIFTS)) {
-            this.set(this.keys.SHIFTS, []);
-        }
-        if (!this.get(this.keys.ADMINS)) {
-            this.set(this.keys.ADMINS, [{
+// Función para inicializar datos de ejemplo si es necesario
+function initializeSampleData() {
+    // Verificar si ya existen datos
+    if (!localStorage.getItem('doctors')) {
+        const sampleDoctors = [
+            {
                 id: 1,
-                username: 'admin',
-                password: 'admin123',
-                name: 'Administrador Principal',
-                email: 'admin@uci.com'
-            }]);
-        }
-
-        // Sincronizar entre pestañas
-        this.setupCrossTabSync();
-    }
-
-    setupCrossTabSync() {
-        // Escuchar cambios en otras pestañas
-        window.addEventListener('storage', (e) => {
-            if (e.key === this.keys.DOCTORS || e.key === this.keys.SHIFTS) {
-                console.log('Datos actualizados desde otra pestaña:', e.key);
-                // Disparar evento personalizado para que otros componentes se actualicen
-                window.dispatchEvent(new CustomEvent('dataUpdated', { 
-                    detail: { key: e.key, newValue: e.newValue } 
-                }));
+                name: 'Dr. Juan Pérez',
+                specialty: 'Cardiología',
+                email: 'juan.perez@hospital.com',
+                phone: '+1234567890',
+                username: 'jperez',
+                password: 'medico123',
+                photo: null
+            },
+            {
+                id: 2,
+                name: 'Dra. María García',
+                specialty: 'Neurología',
+                email: 'maria.garcia@hospital.com',
+                phone: '+1234567891',
+                username: 'mgarcia',
+                password: 'medico123',
+                photo: null
+            },
+            {
+                id: 3,
+                name: 'Dr. Carlos López',
+                specialty: 'Pediatría',
+                email: 'carlos.lopez@hospital.com',
+                phone: '+1234567892',
+                username: 'clopez',
+                password: 'medico123',
+                photo: null
             }
-        });
+        ];
+        localStorage.setItem('doctors', JSON.stringify(sampleDoctors));
     }
-
-    // Métodos básicos mejorados para sincronización
-    set(key, value) {
-        try {
-            const oldValue = this.get(key);
-            localStorage.setItem(key, JSON.stringify(value));
-            
-            // Disparar evento storage para sincronizar otras pestañas
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: key,
-                oldValue: JSON.stringify(oldValue),
-                newValue: JSON.stringify(value),
-                storageArea: localStorage
-            }));
-            
-            return true;
-        } catch (error) {
-            console.error('Error guardando:', error);
-            return false;
-        }
-    }
-
-    get(key) {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : null;
-        } catch (error) {
-            console.error('Error leyendo:', error);
-            return null;
-        }
-    }
-
-    // Médicos
-    getDoctors() {
-        return this.get(this.keys.DOCTORS) || [];
-    }
-
-    saveDoctor(doctorData) {
-        const doctors = this.getDoctors();
-        let doctorToSave;
-
-        if (doctorData.id) {
-            // Editar
-            const index = doctors.findIndex(d => d.id === doctorData.id);
-            if (index !== -1) {
-                // Mantener datos existentes
-                const existing = doctors[index];
-                doctorToSave = {
-                    ...existing,
-                    ...doctorData,
-                    // Mantener foto si no se proporciona nueva
-                    photo: doctorData.photo || existing.photo,
-                    // Mantener contraseña si no se cambia
-                    password: doctorData.password || existing.password
-                };
-                doctors[index] = doctorToSave;
+    
+    if (!localStorage.getItem('shifts')) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        
+        const sampleShifts = [
+            {
+                id: 1,
+                doctorId: 1,
+                doctorName: 'Dr. Juan Pérez',
+                date: new Date(currentYear, currentMonth, 1).toISOString().split('T')[0],
+                startTime: '08:00',
+                endTime: '16:00',
+                type: 'guardia',
+                notes: 'Turno de guardia regular'
+            },
+            {
+                id: 2,
+                doctorId: 2,
+                doctorName: 'Dra. María García',
+                date: new Date(currentYear, currentMonth, 1).toISOString().split('T')[0],
+                startTime: '16:00',
+                endTime: '00:00',
+                type: 'consulta',
+                notes: 'Consultas programadas'
+            },
+            {
+                id: 3,
+                doctorId: 3,
+                doctorName: 'Dr. Carlos López',
+                date: new Date(currentYear, currentMonth, 2).toISOString().split('T')[0],
+                startTime: '00:00',
+                endTime: '08:00',
+                type: 'emergencia',
+                notes: 'Turno de emergencia'
             }
-        } else {
-            // Nuevo
-            doctorToSave = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                ...doctorData,
-                createdAt: new Date().toISOString(),
-                photo: doctorData.photo || 'assets/images/default-doctor.jpg'
-            };
-            doctors.push(doctorToSave);
-        }
-
-        if (this.set(this.keys.DOCTORS, doctors)) {
-            return doctorToSave;
-        }
-        return null;
-    }
-
-    deleteDoctor(id) {
-        const doctors = this.getDoctors().filter(d => d.id !== id);
-        const success = this.set(this.keys.DOCTORS, doctors);
-        
-        if (success) {
-            // Eliminar turnos del médico
-            const shifts = this.getShifts().filter(s => s.doctorId !== id);
-            this.set(this.keys.SHIFTS, shifts);
-        }
-        
-        return success;
-    }
-
-    // Turnos
-    getShifts() {
-        return this.get(this.keys.SHIFTS) || [];
-    }
-
-    saveShift(shiftData) {
-        const shifts = this.getShifts();
-        let shiftToSave;
-
-        if (shiftData.id) {
-            // Editar
-            const index = shifts.findIndex(s => s.id === shiftData.id);
-            if (index !== -1) {
-                shiftToSave = { ...shifts[index], ...shiftData };
-                shifts[index] = shiftToSave;
-            }
-        } else {
-            // Nuevo
-            shiftToSave = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                ...shiftData,
-                createdAt: new Date().toISOString()
-            };
-            shifts.push(shiftToSave);
-        }
-
-        if (this.set(this.keys.SHIFTS, shifts)) {
-            return shiftToSave;
-        }
-        return null;
-    }
-
-    deleteShift(id) {
-        const shifts = this.getShifts().filter(s => s.id !== id);
-        return this.set(this.keys.SHIFTS, shifts);
-    }
-
-    getShiftsByDoctor(doctorId) {
-        return this.getShifts().filter(s => s.doctorId === doctorId);
-    }
-
-    getShiftsByDate(date) {
-        const targetDate = new Date(date).toDateString();
-        return this.getShifts().filter(shift => {
-            const shiftDate = new Date(shift.date).toDateString();
-            return shiftDate === targetDate;
-        });
-    }
-
-    getShiftsByDateRange(startDate, endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        return this.getShifts().filter(shift => {
-            const shiftDate = new Date(shift.date);
-            return shiftDate >= start && shiftDate <= end;
-        });
-    }
-
-    // Administradores
-    getAdmins() {
-        return this.get(this.keys.ADMINS) || [];
-    }
-
-    findAdmin(username) {
-        return this.getAdmins().find(a => a.username === username);
-    }
-
-    // Utilidades
-    exportData() {
-        return JSON.stringify({
-            doctors: this.getDoctors(),
-            shifts: this.getShifts(),
-            admins: this.getAdmins(),
-            exportDate: new Date().toISOString()
-        }, null, 2);
-    }
-
-    getStatistics() {
-        const doctors = this.getDoctors();
-        const shifts = this.getShifts();
-        
-        return {
-            totalDoctors: doctors.length,
-            totalShifts: shifts.length,
-            specialties: [...new Set(doctors.map(d => d.specialty))].length
-        };
-    }
-
-    // Validación de conflictos
-    checkShiftConflict(shift, excludeId = null) {
-        const shifts = this.getShifts();
-        const shiftDate = new Date(shift.date);
-        const shiftStart = new Date(`${shift.date}T${shift.startTime}`);
-        const shiftEnd = new Date(`${shift.date}T${shift.endTime}`);
-
-        return shifts.some(existing => {
-            if (excludeId && existing.id === excludeId) return false;
-            if (existing.doctorId !== shift.doctorId) return false;
-            
-            const existingDate = new Date(existing.date);
-            if (existingDate.toDateString() !== shiftDate.toDateString()) return false;
-
-            const existingStart = new Date(`${existing.date}T${existing.startTime}`);
-            const existingEnd = new Date(`${existing.date}T${existing.endTime}`);
-
-            return (shiftStart < existingEnd && shiftEnd > existingStart);
-        });
-    }
-
-    // Limpiar datos (para testing)
-    clearAll() {
-        localStorage.removeItem(this.keys.DOCTORS);
-        localStorage.removeItem(this.keys.SHIFTS);
-        localStorage.removeItem(this.keys.ADMINS);
-        this.init();
+        ];
+        localStorage.setItem('shifts', JSON.stringify(sampleShifts));
     }
 }
 
-// Instancia global
-const storage = new StorageManager();
+// Función para limpiar todos los datos (solo para desarrollo)
+function clearAllData() {
+    if (confirm('¿Estás seguro de que deseas eliminar todos los datos? Esta acción no se puede deshacer.')) {
+        localStorage.removeItem('doctors');
+        localStorage.removeItem('shifts');
+        localStorage.removeItem('currentUser');
+        showNotification('Todos los datos han sido eliminados', 'info');
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    }
+}
+
+// Función para hacer backup completo de la base de datos
+function backupAllData() {
+    const backup = {
+        timestamp: new Date().toISOString(),
+        doctors: JSON.parse(localStorage.getItem('doctors') || '[]'),
+        shifts: JSON.parse(localStorage.getItem('shifts') || '[]')
+    };
+    
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `backup_completo_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Backup completo descargado', 'success');
+}
+
+// Función para restaurar datos desde backup
+function restoreFromBackup(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const backup = JSON.parse(e.target.result);
+            
+            if (backup.doctors && backup.shifts) {
+                if (confirm('¿Estás seguro de que deseas restaurar este backup? Se sobrescribirán todos los datos actuales.')) {
+                    localStorage.setItem('doctors', JSON.stringify(backup.doctors));
+                    localStorage.setItem('shifts', JSON.stringify(backup.shifts));
+                    showNotification('Backup restaurado correctamente', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            } else {
+                showNotification('El archivo de backup no es válido', 'error');
+            }
+        } catch (error) {
+            showNotification('Error al leer el archivo de backup', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Inicializar datos de ejemplo al cargar (solo si no hay datos)
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSampleData();
+});
+
+// Exportar funciones para uso global
+window.clearAllData = clearAllData;
+window.backupAllData = backupAllData;
+window.restoreFromBackup = restoreFromBackup;
