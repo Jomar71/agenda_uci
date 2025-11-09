@@ -11,6 +11,7 @@ class ShiftsManager {
         console.log('📅 Inicializando gestor de turnos...');
         this.loadShifts();
         this.setupEventListeners();
+        this.setupDataSync();
         this.renderCalendar();
     }
 
@@ -83,6 +84,41 @@ class ShiftsManager {
             backupBtn.addEventListener('click', () => this.exportToExcel());
             console.log('✅ Botón backup configurado');
         }
+    }
+
+    setupDataSync() {
+        console.log('🔄 Configurando sincronización de datos para turnos...');
+
+        // Sincronización con localStorage (cambios en otras pestañas/ventanas)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'shifts') {
+                console.log('🔄 Cambios detectados en turnos desde otra pestaña');
+                this.loadShifts();
+                this.renderCalendar();
+                // Notificar a otros componentes
+                window.dispatchEvent(new CustomEvent('shiftsSynced', {
+                    detail: { source: 'storage' }
+                }));
+            }
+        });
+
+        // Sincronización interna con eventos personalizados
+        window.addEventListener('dataUpdated', (e) => {
+            if (e.detail?.key === 'shifts') {
+                console.log('🔄 Actualización interna de turnos detectada');
+                this.loadShifts();
+                this.renderCalendar();
+            }
+        });
+
+        // Evento personalizado para forzar actualización
+        window.addEventListener('forceRefresh', () => {
+            console.log('🔄 Forzando actualización completa de turnos');
+            this.loadShifts();
+            this.renderCalendar();
+        });
+
+        console.log('✅ Sincronización de datos configurada para turnos');
     }
 
     loadShifts() {

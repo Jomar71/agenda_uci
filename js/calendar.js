@@ -9,6 +9,7 @@ class CalendarManager {
         console.log('📅 Inicializando calendario mensual...');
         this.renderMonthlyPreview();
         this.setupEventListeners();
+        this.setupDataSync();
     }
 
     setupEventListeners() {
@@ -42,6 +43,56 @@ class CalendarManager {
             console.log('🔄 Sincronizando calendario por refresco forzado');
             this.renderMonthlyPreview();
         });
+
+        // Sincronización específica para calendario
+        window.addEventListener('shiftsSynced', () => {
+            console.log('🔄 Calendario sincronizado por cambios en turnos');
+            this.renderMonthlyPreview();
+        });
+
+        window.addEventListener('doctorsSynced', () => {
+            console.log('🔄 Calendario sincronizado por cambios en médicos');
+            this.renderMonthlyPreview();
+        });
+    }
+
+    setupDataSync() {
+        console.log('🔄 Configurando sincronización de datos para calendario...');
+
+        // Sincronización con localStorage (cambios en otras pestañas/ventanas)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'shifts' || e.key === 'doctors') {
+                console.log('🔄 Cambios detectados en datos desde otra pestaña, actualizando calendario');
+                this.renderMonthlyPreview();
+            }
+        });
+
+        // Sincronización interna con eventos personalizados
+        window.addEventListener('dataUpdated', (e) => {
+            if (e.detail?.key === 'shifts' || e.detail?.key === 'doctors') {
+                console.log('🔄 Actualización interna detectada, actualizando calendario');
+                this.renderMonthlyPreview();
+            }
+        });
+
+        // Evento personalizado para forzar actualización
+        window.addEventListener('forceRefresh', () => {
+            console.log('🔄 Forzando actualización completa del calendario');
+            this.renderMonthlyPreview();
+        });
+
+        // Sincronización específica para calendario
+        window.addEventListener('shiftsSynced', () => {
+            console.log('🔄 Calendario sincronizado por cambios en turnos');
+            this.renderMonthlyPreview();
+        });
+
+        window.addEventListener('doctorsSynced', () => {
+            console.log('🔄 Calendario sincronizado por cambios en médicos');
+            this.renderMonthlyPreview();
+        });
+
+        console.log('✅ Sincronización de datos configurada para calendario');
     }
 
     renderMonthlyPreview() {

@@ -10,22 +10,23 @@ class DoctorsManager {
         console.log('👨‍⚕️ Inicializando gestor de médicos...');
         this.loadDoctors();
         this.setupEventListeners();
+        this.setupDataSync();
     }
 
     setupEventListeners() {
         console.log('🔧 Configurando eventos de médicos...');
-        
+
         // Botones del formulario de médico
         const saveDoctorBtn = document.getElementById('save-doctor-btn');
         const cancelDoctorBtn = document.getElementById('cancel-doctor-btn');
-        
+
         if (saveDoctorBtn) {
             saveDoctorBtn.addEventListener('click', () => this.saveDoctor());
             console.log('✅ Botón guardar médico configurado');
         } else {
             console.error('❌ No se encontró el botón guardar médico');
         }
-        
+
         if (cancelDoctorBtn) {
             cancelDoctorBtn.addEventListener('click', () => this.closeDoctorModal());
             console.log('✅ Botón cancelar médico configurado');
@@ -41,15 +42,15 @@ class DoctorsManager {
         // Búsqueda y filtros
         const searchInput = document.getElementById('doctor-search');
         const specialtyFilter = document.getElementById('specialty-filter');
-        
+
         if (searchInput) {
             searchInput.addEventListener('input', () => this.filterDoctors());
         }
-        
+
         if (specialtyFilter) {
             specialtyFilter.addEventListener('change', () => this.filterDoctors());
         }
-        
+
         // Navegación desde admin
         const manageDoctorsBtn = document.getElementById('manage-doctors');
         if (manageDoctorsBtn) {
@@ -57,6 +58,41 @@ class DoctorsManager {
                 document.querySelector('[href="#medicos"]').click();
             });
         }
+    }
+
+    setupDataSync() {
+        console.log('🔄 Configurando sincronización de datos para médicos...');
+
+        // Sincronización con localStorage (cambios en otras pestañas/ventanas)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'doctors') {
+                console.log('🔄 Cambios detectados en médicos desde otra pestaña');
+                this.loadDoctors();
+                this.updateStats();
+                // Notificar a otros componentes
+                window.dispatchEvent(new CustomEvent('doctorsSynced', {
+                    detail: { source: 'storage' }
+                }));
+            }
+        });
+
+        // Sincronización interna con eventos personalizados
+        window.addEventListener('dataUpdated', (e) => {
+            if (e.detail?.key === 'doctors') {
+                console.log('🔄 Actualización interna de médicos detectada');
+                this.loadDoctors();
+                this.updateStats();
+            }
+        });
+
+        // Evento personalizado para forzar actualización
+        window.addEventListener('forceRefresh', () => {
+            console.log('🔄 Forzando actualización completa de médicos');
+            this.loadDoctors();
+            this.updateStats();
+        });
+
+        console.log('✅ Sincronización de datos configurada para médicos');
     }
 
     loadDoctors() {
