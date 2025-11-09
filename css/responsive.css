@@ -144,15 +144,20 @@
 
     .doctor-card {
         padding: 1.25rem;
+        min-height: 350px;
     }
 
     .doctor-actions {
         flex-direction: column;
+        gap: 0.5rem;
+        margin-top: auto;
     }
 
     .doctor-actions .btn {
         width: 100%;
         justify-content: center;
+        min-height: 44px;
+        font-size: 0.9rem;
     }
 
     .form-row {
@@ -268,7 +273,7 @@
     }
 
     .add-doctor-card {
-        min-height: 200px;
+        min-height: 350px;
     }
 
     .add-doctor-content {
@@ -388,6 +393,7 @@
 
     .doctor-card {
         padding: 1rem;
+        min-height: 320px;
     }
 
     .doctor-photo {
@@ -398,6 +404,19 @@
     .doctor-contact {
         justify-content: flex-start;
         font-size: 0.9rem;
+    }
+
+    .doctor-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: auto;
+    }
+
+    .doctor-actions .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 48px;
+        font-size: 1rem;
     }
 
     .modal-content {
@@ -490,11 +509,21 @@
 
     .doctor-card {
         padding: 0.75rem;
+        min-height: 280px;
+    }
+
+    .doctor-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: auto;
     }
 
     .doctor-actions .btn {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.75rem;
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
     }
 
     .calendar-preview-grid {
@@ -532,7 +561,7 @@
     }
 
     .add-doctor-card {
-        min-height: 150px;
+        min-height: 320px;
     }
 }
 
