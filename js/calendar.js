@@ -1,7 +1,9 @@
-// Calendario para vista mensual en inicio - VERSION CORREGIDA
+// Calendario para vista mensual en inicio - VERSION CON SINCRONIZACIÓN EN TIEMPO REAL
 class CalendarManager {
     constructor() {
         this.currentDate = new Date();
+        this.listeners = new Map();
+        this.isLoading = false;
         this.init();
     }
 
@@ -10,6 +12,7 @@ class CalendarManager {
         this.renderMonthlyPreview();
         this.setupEventListeners();
         this.setupDataSync();
+        this.setupRealtimeSync();
     }
 
     setupEventListeners() {
@@ -92,7 +95,51 @@ class CalendarManager {
             this.renderMonthlyPreview();
         });
 
+        // Sincronización en tiempo real para turnos
+        window.addEventListener('shiftsRealtimeUpdate', () => {
+            console.log('🔥 Calendario sincronizado por cambios en tiempo real en turnos');
+            this.renderMonthlyPreview();
+        });
+
+        // Sincronización en tiempo real para médicos
+        window.addEventListener('doctorsRealtimeUpdate', () => {
+            console.log('🔥 Calendario sincronizado por cambios en tiempo real en médicos');
+            this.renderMonthlyPreview();
+        });
+
         console.log('✅ Sincronización de datos configurada para calendario');
+    }
+
+    setupRealtimeSync() {
+        console.log('🔥 Configurando sincronización en tiempo real para calendario...');
+
+        // Evitar múltiples inicializaciones
+        if (this.listeners.has('shifts') || this.listeners.has('doctors')) {
+            console.log('⚠️ Sincronización en tiempo real ya configurada');
+            return;
+        }
+
+        // Listener para cambios en tiempo real en turnos
+        if (window.firestoreService) {
+            const shiftsListener = window.firestoreService.listenToCollection('shifts', (changes) => {
+                console.log('🔥 Cambios en tiempo real detectados en turnos para calendario:', changes.length);
+                if (!this.isLoading) {
+                    this.renderMonthlyPreview();
+                }
+            });
+
+            const doctorsListener = window.firestoreService.listenToCollection('doctors', (changes) => {
+                console.log('🔥 Cambios en tiempo real detectados en médicos para calendario:', changes.length);
+                if (!this.isLoading) {
+                    this.renderMonthlyPreview();
+                }
+            });
+
+            this.listeners.set('shifts', shiftsListener);
+            this.listeners.set('doctors', doctorsListener);
+        } else {
+            console.log('⚠️ Firestore no disponible, sincronización en tiempo real deshabilitada para calendario');
+        }
     }
 
     renderMonthlyPreview() {
@@ -102,6 +149,13 @@ class CalendarManager {
             return;
         }
 
+        // Evitar renderizados simultáneos
+        if (this.isLoading) {
+            console.log('⚠️ Renderizado en progreso, omitiendo...');
+            return;
+        }
+
+        this.isLoading = true;
         console.log('🎨 Renderizando vista mensual...');
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
@@ -195,6 +249,7 @@ class CalendarManager {
 
         container.innerHTML = html;
         this.attachPreviewEvents();
+        this.isLoading = false;
         console.log('✅ Vista mensual renderizada correctamente');
     }
 
@@ -264,6 +319,28 @@ class CalendarManager {
     refresh() {
         console.log('🔄 Forzando actualización del calendario');
         this.renderMonthlyPreview();
+    }
+
+    // Método para limpiar listeners (útil para debugging o reinicialización)
+    cleanup() {
+        console.log('🧹 Limpiando listeners del calendario...');
+        this.listeners.forEach((listener, key) => {
+            if (listener && typeof listener === 'function') {
+                listener(); // Detener el listener
+            }
+        });
+        this.listeners.clear();
+        console.log('✅ Listeners limpiados');
+    }
+
+    // Método para verificar estado de sincronización
+    getSyncStatus() {
+        return {
+            hasRealtimeSync: this.listeners.size > 0,
+            isLoading: this.isLoading,
+            currentDate: this.currentDate.toISOString(),
+            listenersCount: this.listeners.size
+        };
     }
 }
 

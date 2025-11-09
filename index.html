@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -14,7 +18,7 @@
         <div class="header-container">
             <div class="logo">
                 <i class="fas fa-heartbeat"></i>
-                <h1>UCI Medical</h1>
+                <h1>Turnos SIMED <h1>
             </div>
             <nav class="nav">
                 <ul class="nav-list">
@@ -46,7 +50,7 @@
                     <h2>Bienvenido al Sistema de Gestión UCI</h2>
                     <p>Sistema especializado para la gestión de turnos médicos en Unidades de Cuidados Intensivos</p>
                 </div>
-                
+
                 <div class="about-uci">
                     <h3>Sobre Nuestra UCI</h3>
                     <div class="about-content">
@@ -177,13 +181,13 @@
             <h2 id="doctor-modal-title">Detalles del Médico</h2>
             <form id="doctor-form">
                 <input type="hidden" id="doctor-id">
-                
+
                 <!-- Foto del médico -->
                 <div class="form-group">
                     <label for="doctor-photo">Foto del Médico:</label>
                     <div id="doctor-photo-preview" style="margin-bottom: 10px;"></div>
                     <input type="file" id="doctor-photo" accept="image/*">
-                    <small style="color: #666;">Formatos: JPG, PNG, GIF (Máx. 2MB)</small>
+                    <small style="color: #c9c8c8;">Formatos: JPG, PNG, GIF (Máx. 2MB)</small>
                 </div>
 
                 <div class="form-row">

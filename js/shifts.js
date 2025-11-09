@@ -1,9 +1,10 @@
-// Gestión de turnos - VERSION COMPLETAMENTE CORREGIDA
+// Gestión de turnos - VERSION CON FIRESTORE Y SINCRONIZACIÓN EN TIEMPO REAL
 class ShiftsManager {
     constructor() {
         this.shifts = [];
         this.currentDate = new Date();
         this.currentView = 'month';
+        this.firestoreListener = null;
         this.init();
     }
 
@@ -12,6 +13,7 @@ class ShiftsManager {
         this.loadShifts();
         this.setupEventListeners();
         this.setupDataSync();
+        this.setupRealtimeSync();
         this.renderCalendar();
     }
 
@@ -121,13 +123,58 @@ class ShiftsManager {
         console.log('✅ Sincronización de datos configurada para turnos');
     }
 
-    loadShifts() {
-        console.log('📂 Cargando turnos desde almacenamiento...');
-        this.shifts = this.getShiftsFromStorage();
-        console.log(`✅ ${this.shifts.length} turnos cargados`);
+    setupRealtimeSync() {
+        console.log('🔥 Configurando sincronización en tiempo real para turnos...');
+
+        if (window.firestoreService) {
+            this.firestoreListener = window.firestoreService.listenToCollection('shifts', (changes) => {
+                console.log('🔥 Cambios en tiempo real detectados en turnos:', changes.length);
+                let needsUpdate = false;
+
+                changes.forEach(change => {
+                    if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
+                        needsUpdate = true;
+                        console.log(`🔥 Turno ${change.type}:`, change.data.date || change.id);
+                    }
+                });
+
+                if (needsUpdate) {
+                    this.loadShifts();
+                    this.renderCalendar();
+                    window.dispatchEvent(new CustomEvent('shiftsRealtimeUpdate', {
+                        detail: { changes: changes }
+                    }));
+                }
+            });
+        } else {
+            console.log('⚠️ Firestore no disponible, sincronización en tiempo real deshabilitada');
+        }
     }
 
-    getShiftsFromStorage() {
+    loadShifts() {
+        console.log('📂 Cargando turnos desde almacenamiento...');
+
+        if (window.firestoreService) {
+            // Cargar desde Firestore
+            window.firestoreService.getAll('shifts').then(shifts => {
+                this.shifts = shifts;
+                this.renderCalendar();
+                console.log(`✅ ${this.shifts.length} turnos cargados desde Firestore`);
+            }).catch(error => {
+                console.error('❌ Error cargando turnos desde Firestore:', error);
+                // Fallback a localStorage
+                this.shifts = this.getShiftsFromLocalStorage();
+                this.renderCalendar();
+            });
+        } else {
+            // Fallback a localStorage
+            this.shifts = this.getShiftsFromLocalStorage();
+            this.renderCalendar();
+            console.log(`✅ ${this.shifts.length} turnos cargados desde localStorage`);
+        }
+    }
+
+    getShiftsFromLocalStorage() {
         try {
             const stored = localStorage.getItem('shifts');
             if (stored) {
@@ -138,20 +185,20 @@ class ShiftsManager {
         } catch (error) {
             console.error('❌ Error cargando turnos:', error);
         }
-        
+
         // Datos de ejemplo si no hay datos
         console.log('📝 Creando turnos de ejemplo...');
         const today = new Date();
         const sampleShifts = [];
-        
+
         // Crear algunos turnos de ejemplo para los próximos 7 días
         for (let i = 0; i < 7; i++) {
             const shiftDate = new Date(today);
             shiftDate.setDate(today.getDate() + i);
-            
+
             const doctorId = (i % 2) + 1; // Alternar entre médico 1 y 2
             const doctor = window.doctorsManager?.getDoctorById(doctorId);
-            
+
             if (doctor) {
                 sampleShifts.push({
                     id: i + 1,
@@ -166,9 +213,9 @@ class ShiftsManager {
                 });
             }
         }
-        
+
         // Guardar datos de ejemplo
-        this.saveShifts(sampleShifts);
+        this.saveShiftsToLocalStorage(sampleShifts);
         return sampleShifts;
     }
 
@@ -181,6 +228,18 @@ class ShiftsManager {
         } catch (error) {
             console.error('❌ Error guardando turnos:', error);
             auth.showNotification('Error al guardar los turnos', 'error');
+            return false;
+        }
+    }
+
+    saveShiftsToLocalStorage(shiftsToSave = null) {
+        const shifts = shiftsToSave || this.shifts;
+        try {
+            localStorage.setItem('shifts', JSON.stringify(shifts));
+            console.log('💾 Turnos guardados en localStorage:', shifts.length);
+            return true;
+        } catch (error) {
+            console.error('❌ Error guardando turnos en localStorage:', error);
             return false;
         }
     }
@@ -529,7 +588,7 @@ class ShiftsManager {
     saveShift() {
         console.log('💾 Intentando guardar turno...');
         const formData = this.getShiftFormData();
-        
+
         if (!this.validateShift(formData)) {
             console.error('❌ Validación de turno falló');
             return;
@@ -562,7 +621,7 @@ class ShiftsManager {
                 auth.showNotification('Turno no encontrado', 'error');
                 return;
             }
-            
+
             if (!auth.canEditShift(shift)) {
                 auth.showNotification('No tiene permisos para editar este turno', 'error');
                 return;
@@ -570,7 +629,7 @@ class ShiftsManager {
 
             shiftData.id = parseInt(formData.id);
             shiftData.createdAt = shift.createdAt;
-            
+
             const index = this.shifts.findIndex(s => s.id === shiftData.id);
             if (index !== -1) {
                 this.shifts[index] = shiftData;
@@ -586,28 +645,54 @@ class ShiftsManager {
             console.log('✅ Nuevo turno creado:', shiftData.id);
         }
 
-        if (this.saveShifts()) {
-            this.renderCalendar();
-            this.closeShiftModal();
-            auth.showNotification(successMessage, 'success');
+        // Guardar en Firestore si está disponible
+        if (window.firestoreService) {
+            window.firestoreService.save('shifts', shiftData.id, shiftData).then(() => {
+                console.log('🔥 Turno guardado en Firestore');
+                this.loadShifts();
+                this.closeShiftModal();
+                auth.showNotification(successMessage, 'success');
 
-            // Forzar actualización inmediata en todos los componentes
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('forceRefresh'));
-            }, 100);
+                // Forzar actualización inmediata en todos los componentes
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('forceRefresh'));
+                }, 100);
 
-            // Notificar actualización de datos con más detalle
-            window.dispatchEvent(new CustomEvent('dataUpdated', {
-                detail: {
-                    key: 'shifts',
-                    action: formData.id ? 'update' : 'create',
-                    id: shiftData.id,
-                    timestamp: Date.now()
+                // Notificar actualización de datos con más detalle
+                window.dispatchEvent(new CustomEvent('dataUpdated', {
+                    detail: {
+                        key: 'shifts',
+                        action: formData.id ? 'update' : 'create',
+                        id: shiftData.id,
+                        timestamp: Date.now()
+                    }
+                }));
+
+                return true;
+            }).catch(error => {
+                console.error('❌ Error guardando en Firestore:', error);
+                // Fallback a localStorage
+                if (this.saveShiftsToLocalStorage()) {
+                    this.loadShifts();
+                    this.closeShiftModal();
+                    auth.showNotification(successMessage, 'success');
+                    return true;
+                } else {
+                    auth.showNotification('Error al guardar los cambios', 'error');
+                    return false;
                 }
-            }));
-
+            });
         } else {
-            auth.showNotification('Error al guardar el turno', 'error');
+            // Fallback a localStorage
+            if (this.saveShiftsToLocalStorage()) {
+                this.loadShifts();
+                this.closeShiftModal();
+                auth.showNotification(successMessage, 'success');
+                return true;
+            } else {
+                auth.showNotification('Error al guardar los cambios', 'error');
+                return false;
+            }
         }
     }
 
@@ -688,29 +773,55 @@ class ShiftsManager {
         }
 
         if (confirm(`¿Estás seguro de eliminar el turno del ${this.formatDate(new Date(shift.date))}?`)) {
-            this.shifts = this.shifts.filter(s => s.id !== parseInt(shiftId));
-            
-            if (this.saveShifts()) {
-                this.renderCalendar();
-                this.closeShiftModal();
-                auth.showNotification('Turno eliminado correctamente', 'success');
+            // Eliminar de Firestore si está disponible
+            if (window.firestoreService) {
+                window.firestoreService.delete('shifts', parseInt(shiftId)).then(() => {
+                    console.log('🔥 Turno eliminado de Firestore');
+                    // Eliminar de array local
+                    this.shifts = this.shifts.filter(s => s.id !== parseInt(shiftId));
 
-                // Forzar actualización inmediata en todos los componentes
-                setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('forceRefresh'));
-                }, 100);
+                    this.loadShifts();
+                    this.closeShiftModal();
+                    auth.showNotification('Turno eliminado correctamente', 'success');
 
-                // Notificar eliminación de datos con más detalle
-                window.dispatchEvent(new CustomEvent('dataUpdated', {
-                    detail: {
-                        key: 'shifts',
-                        action: 'delete',
-                        id: parseInt(shiftId),
-                        timestamp: Date.now()
+                    // Forzar actualización inmediata en todos los componentes
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('forceRefresh'));
+                    }, 100);
+
+                    // Notificar eliminación de datos con más detalle
+                    window.dispatchEvent(new CustomEvent('dataUpdated', {
+                        detail: {
+                            key: 'shifts',
+                            action: 'delete',
+                            id: parseInt(shiftId),
+                            timestamp: Date.now()
+                        }
+                    }));
+
+                    console.log('✅ Turno eliminado:', shiftId);
+                }).catch(error => {
+                    console.error('❌ Error eliminando de Firestore:', error);
+                    // Fallback a localStorage
+                    this.shifts = this.shifts.filter(s => s.id !== parseInt(shiftId));
+                    if (this.saveShiftsToLocalStorage()) {
+                        this.loadShifts();
+                        this.closeShiftModal();
+                        auth.showNotification('Turno eliminado correctamente', 'success');
+                    } else {
+                        auth.showNotification('Error al eliminar el turno', 'error');
                     }
-                }));
-
-                console.log('✅ Turno eliminado:', shiftId);
+                });
+            } else {
+                // Fallback a localStorage
+                this.shifts = this.shifts.filter(s => s.id !== parseInt(shiftId));
+                if (this.saveShiftsToLocalStorage()) {
+                    this.loadShifts();
+                    this.closeShiftModal();
+                    auth.showNotification('Turno eliminado correctamente', 'success');
+                } else {
+                    auth.showNotification('Error al eliminar el turno', 'error');
+                }
             }
         }
     }

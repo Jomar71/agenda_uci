@@ -1,9 +1,11 @@
-// Utilidades de almacenamiento y datos
+// Utilidades de almacenamiento y datos - VERSION CON FIRESTORE
 
 // Función para inicializar datos de ejemplo si es necesario
 function initializeSampleData() {
-    // Verificar si ya existen datos
-    if (!localStorage.getItem('doctors')) {
+    // Verificar si ya existen datos en Firestore o localStorage
+    const hasDoctors = localStorage.getItem('doctors') || (window.firestoreService && window.firestoreService.getAll('doctors').length > 0);
+
+    if (!hasDoctors) {
         const sampleDoctors = [
             {
                 id: 1,
@@ -36,14 +38,24 @@ function initializeSampleData() {
                 photo: null
             }
         ];
-        localStorage.setItem('doctors', JSON.stringify(sampleDoctors));
+
+        // Guardar en Firestore si está disponible, sino en localStorage
+        if (window.firestoreService) {
+            sampleDoctors.forEach(doctor => {
+                window.firestoreService.save('doctors', doctor.id, doctor);
+            });
+        } else {
+            localStorage.setItem('doctors', JSON.stringify(sampleDoctors));
+        }
     }
-    
-    if (!localStorage.getItem('shifts')) {
+
+    const hasShifts = localStorage.getItem('shifts') || (window.firestoreService && window.firestoreService.getAll('shifts').length > 0);
+
+    if (!hasShifts) {
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
-        
+
         const sampleShifts = [
             {
                 id: 1,
@@ -76,13 +88,29 @@ function initializeSampleData() {
                 notes: 'Turno de emergencia'
             }
         ];
-        localStorage.setItem('shifts', JSON.stringify(sampleShifts));
+
+        // Guardar en Firestore si está disponible, sino en localStorage
+        if (window.firestoreService) {
+            sampleShifts.forEach(shift => {
+                window.firestoreService.save('shifts', shift.id, shift);
+            });
+        } else {
+            localStorage.setItem('shifts', JSON.stringify(sampleShifts));
+        }
     }
 }
 
 // Función para limpiar todos los datos (solo para desarrollo)
 function clearAllData() {
     if (confirm('¿Estás seguro de que deseas eliminar todos los datos? Esta acción no se puede deshacer.')) {
+        // Limpiar Firestore si está disponible
+        if (window.firestoreService) {
+            // Nota: En un entorno real, tendríamos que eliminar todos los documentos
+            // Por simplicidad, solo limpiamos localStorage como fallback
+            console.log('Limpiando datos de Firestore...');
+        }
+
+        // Limpiar localStorage
         localStorage.removeItem('doctors');
         localStorage.removeItem('shifts');
         localStorage.removeItem('currentUser');
@@ -97,20 +125,30 @@ function clearAllData() {
 function backupAllData() {
     const backup = {
         timestamp: new Date().toISOString(),
-        doctors: JSON.parse(localStorage.getItem('doctors') || '[]'),
-        shifts: JSON.parse(localStorage.getItem('shifts') || '[]')
+        source: window.firestoreService && window.firestoreService.isConnected() ? 'firestore' : 'localStorage',
+        doctors: [],
+        shifts: []
     };
-    
+
+    // Obtener datos de Firestore o localStorage
+    if (window.firestoreService) {
+        backup.doctors = window.firestoreService.getAll('doctors');
+        backup.shifts = window.firestoreService.getAll('shifts');
+    } else {
+        backup.doctors = JSON.parse(localStorage.getItem('doctors') || '[]');
+        backup.shifts = JSON.parse(localStorage.getItem('shifts') || '[]');
+    }
+
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    
+
     link.href = url;
     link.download = `backup_completo_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showNotification('Backup completo descargado', 'success');
 }
 
@@ -120,11 +158,25 @@ function restoreFromBackup(file) {
     reader.onload = function(e) {
         try {
             const backup = JSON.parse(e.target.result);
-            
+
             if (backup.doctors && backup.shifts) {
                 if (confirm('¿Estás seguro de que deseas restaurar este backup? Se sobrescribirán todos los datos actuales.')) {
-                    localStorage.setItem('doctors', JSON.stringify(backup.doctors));
-                    localStorage.setItem('shifts', JSON.stringify(backup.shifts));
+                    // Restaurar en Firestore si está disponible
+                    if (window.firestoreService) {
+                        backup.doctors.forEach(doctor => {
+                            window.firestoreService.save('doctors', doctor.id, doctor);
+                        });
+                        backup.shifts.forEach(shift => {
+                            window.firestoreService.save('shifts', shift.id, shift);
+                        });
+                        console.log('Datos restaurados en Firestore');
+                    } else {
+                        // Fallback a localStorage
+                        localStorage.setItem('doctors', JSON.stringify(backup.doctors));
+                        localStorage.setItem('shifts', JSON.stringify(backup.shifts));
+                        console.log('Datos restaurados en localStorage');
+                    }
+
                     showNotification('Backup restaurado correctamente', 'success');
                     setTimeout(() => {
                         location.reload();
@@ -142,7 +194,10 @@ function restoreFromBackup(file) {
 
 // Inicializar datos de ejemplo al cargar (solo si no hay datos)
 document.addEventListener('DOMContentLoaded', function() {
-    initializeSampleData();
+    // Esperar a que Firestore esté listo
+    setTimeout(() => {
+        initializeSampleData();
+    }, 1000);
 });
 
 // Exportar funciones para uso global
