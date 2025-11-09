@@ -485,9 +485,19 @@ class DoctorsManager {
             this.closeDoctorModal();
             window.auth?.showNotification(successMessage, 'success');
 
-            // Notificar actualización de datos
+            // Forzar actualización inmediata en todos los componentes
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('forceRefresh'));
+            }, 100);
+
+            // Notificar actualización de datos con más detalle
             window.dispatchEvent(new CustomEvent('dataUpdated', {
-                detail: { key: 'doctors', action: formData.id ? 'update' : 'create', id: doctorData.id }
+                detail: {
+                    key: 'doctors',
+                    action: formData.id ? 'update' : 'create',
+                    id: doctorData.id,
+                    timestamp: Date.now()
+                }
             }));
 
             return true;
@@ -587,9 +597,19 @@ class DoctorsManager {
                 this.loadDoctors();
                 window.auth?.showNotification('Médico eliminado correctamente', 'success');
 
-                // Notificar eliminación de datos
+                // Forzar actualización inmediata en todos los componentes
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('forceRefresh'));
+                }, 100);
+
+                // Notificar eliminación de datos con más detalle
                 window.dispatchEvent(new CustomEvent('dataUpdated', {
-                    detail: { key: 'doctors', action: 'delete', id: doctorId }
+                    detail: {
+                        key: 'doctors',
+                        action: 'delete',
+                        id: doctorId,
+                        timestamp: Date.now()
+                    }
                 }));
 
                 console.log('✅ Médico eliminado:', doctor.name);

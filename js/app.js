@@ -31,13 +31,18 @@ class App {
     }
 
     setupDataSync() {
-        // Sincronizar datos entre pestañas
+        // Sincronizar datos entre pestañas y dispositivos
         window.addEventListener('storage', (e) => {
             console.log('🔄 Cambio en almacenamiento detectado:', e.key);
             if (e.key === 'doctors' || e.key === 'shifts' || e.key === 'currentUser') {
+                console.log('🔄 Actualizando datos por cambio en localStorage...');
                 this.refreshCurrentSection();
                 // Forzar actualización de todos los managers
                 this.forceDataRefresh();
+                // Notificar a otros componentes
+                window.dispatchEvent(new CustomEvent('dataSynced', {
+                    detail: { key: e.key, source: 'storage' }
+                }));
             }
         });
 
@@ -46,6 +51,8 @@ class App {
             console.log('🔄 Actualización de datos interna:', e.detail?.key);
             this.refreshCurrentSection();
             this.forceDataRefresh();
+            // Forzar sincronización cruzada entre managers
+            this.crossSyncData(e.detail?.key);
         });
 
         // Evento personalizado para forzar actualización completa
@@ -53,6 +60,11 @@ class App {
             console.log('🔄 Forzando actualización completa desde evento personalizado');
             this.forceRefresh();
         });
+
+        // Sincronización periódica cada 5 segundos para asegurar consistencia
+        setInterval(() => {
+            this.checkDataConsistency();
+        }, 5000);
     }
 
     setupEventListeners() {
@@ -304,6 +316,58 @@ class App {
         window.dispatchEvent(new CustomEvent('dataRefreshed', {
             detail: { timestamp: Date.now() }
         }));
+    }
+
+    // Método para sincronización cruzada entre managers
+    crossSyncData(changedKey) {
+        console.log('🔄 Sincronización cruzada para:', changedKey);
+
+        if (changedKey === 'doctors') {
+            // Si cambiaron médicos, actualizar turnos que dependen de ellos
+            if (window.shiftsManager) {
+                window.shiftsManager.loadShifts();
+                window.shiftsManager.renderCalendar();
+                console.log('✅ Turnos sincronizados por cambio en médicos');
+            }
+            // Actualizar calendario mensual
+            if (window.calendarManager) {
+                window.calendarManager.renderMonthlyPreview();
+                console.log('✅ Calendario sincronizado por cambio en médicos');
+            }
+        } else if (changedKey === 'shifts') {
+            // Si cambiaron turnos, actualizar calendario
+            if (window.calendarManager) {
+                window.calendarManager.renderMonthlyPreview();
+                console.log('✅ Calendario sincronizado por cambio en turnos');
+            }
+        }
+    }
+
+    // Método para verificar consistencia de datos periódicamente
+    checkDataConsistency() {
+        try {
+            const doctors = JSON.parse(localStorage.getItem('doctors') || '[]');
+            const shifts = JSON.parse(localStorage.getItem('shifts') || '[]');
+
+            // Verificar que los turnos tengan médicos válidos
+            const doctorIds = new Set(doctors.map(d => d.id));
+            const invalidShifts = shifts.filter(s => !doctorIds.has(s.doctorId));
+
+            if (invalidShifts.length > 0) {
+                console.warn('⚠️ Encontrados turnos con médicos inválidos:', invalidShifts.length);
+                // Limpiar turnos inválidos
+                const validShifts = shifts.filter(s => doctorIds.has(s.doctorId));
+                localStorage.setItem('shifts', JSON.stringify(validShifts));
+                console.log('✅ Turnos inválidos limpiados');
+
+                // Notificar actualización
+                window.dispatchEvent(new CustomEvent('dataUpdated', {
+                    detail: { key: 'shifts', action: 'consistency-fix' }
+                }));
+            }
+        } catch (error) {
+            console.error('❌ Error en verificación de consistencia:', error);
+        }
     }
 }
 

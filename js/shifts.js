@@ -555,9 +555,19 @@ class ShiftsManager {
             this.closeShiftModal();
             auth.showNotification(successMessage, 'success');
 
-            // Notificar actualización de datos
+            // Forzar actualización inmediata en todos los componentes
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('forceRefresh'));
+            }, 100);
+
+            // Notificar actualización de datos con más detalle
             window.dispatchEvent(new CustomEvent('dataUpdated', {
-                detail: { key: 'shifts', action: formData.id ? 'update' : 'create', id: shiftData.id }
+                detail: {
+                    key: 'shifts',
+                    action: formData.id ? 'update' : 'create',
+                    id: shiftData.id,
+                    timestamp: Date.now()
+                }
             }));
 
         } else {
@@ -649,9 +659,19 @@ class ShiftsManager {
                 this.closeShiftModal();
                 auth.showNotification('Turno eliminado correctamente', 'success');
 
-                // Notificar eliminación de datos
+                // Forzar actualización inmediata en todos los componentes
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('forceRefresh'));
+                }, 100);
+
+                // Notificar eliminación de datos con más detalle
                 window.dispatchEvent(new CustomEvent('dataUpdated', {
-                    detail: { key: 'shifts', action: 'delete', id: parseInt(shiftId) }
+                    detail: {
+                        key: 'shifts',
+                        action: 'delete',
+                        id: parseInt(shiftId),
+                        timestamp: Date.now()
+                    }
                 }));
 
                 console.log('✅ Turno eliminado:', shiftId);
