@@ -1,12 +1,16 @@
 // Configuración de Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyD_example_key_here", // Reemplaza con tu API key real
-    authDomain: "tu-proyecto.firebaseapp.com",
-    projectId: "tu-proyecto",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef123456"
-};
+// Import the functions you need from the SDKs you need
+import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Cargar configuración desde archivo seguro
+const firebaseConfig = window.firebaseConfig;
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
