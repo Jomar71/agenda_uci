@@ -20,10 +20,26 @@
 
     .calendar-month {
         min-width: 700px;
+        overflow-x: auto;
     }
 
     .calendar-week {
         min-width: 700px;
+        overflow-x: auto;
+    }
+
+    /* Mejorar botones táctiles */
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.5rem;
+    }
+
+    /* Mejorar inputs para tablets */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 1rem;
+        padding: 0.875rem;
     }
 }
 
@@ -168,6 +184,7 @@
         grid-template-columns: repeat(7, 1fr);
         font-size: 0.7rem;
         min-width: 600px;
+        overflow-x: auto;
     }
 
     .calendar-day {
@@ -340,6 +357,7 @@
     .calendar-month {
         min-width: 450px;
         font-size: 0.6rem;
+        overflow-x: auto;
     }
 
     .calendar-day {
@@ -386,13 +404,40 @@
         margin: 5% auto;
         padding: 1rem;
         width: 98%;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .form-group input,
     .form-group select,
     .form-group textarea {
-        padding: 0.5rem;
-        font-size: 0.9rem;
+        padding: 0.75rem;
+        font-size: 1rem; /* Evitar zoom en iOS */
+        border: 2px solid var(--border-color);
+    }
+
+    /* Mejorar botones táctiles para móviles */
+    .btn {
+        min-height: 48px;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* Mejorar elementos clickeables */
+    .shift-item,
+    .preview-shift,
+    .doctor-card,
+    .calendar-day {
+        min-height: 44px;
+        cursor: pointer;
+    }
+
+    /* Mejorar navegación táctil */
+    .nav-link {
+        padding: 1rem;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
     }
 
     .preview-day {
@@ -405,6 +450,7 @@
 
     .calendar-preview-grid {
         min-width: 400px;
+        overflow-x: auto;
     }
 
     #notifications {
@@ -430,6 +476,7 @@
 
     .calendar-month {
         min-width: 300px;
+        overflow-x: auto;
     }
 
     .calendar-day {
@@ -452,6 +499,7 @@
 
     .calendar-preview-grid {
         min-width: 280px;
+        overflow-x: auto;
     }
 
     .preview-day {

@@ -432,6 +432,12 @@ class DoctorsManager {
             this.loadDoctors();
             this.closeDoctorModal();
             auth.showNotification(successMessage, 'success');
+
+            // Notificar actualización de datos
+            window.dispatchEvent(new CustomEvent('dataUpdated', {
+                detail: { key: 'doctors', action: formData.id ? 'update' : 'create', id: doctorData.id }
+            }));
+
             return true;
         } else {
             auth.showNotification('Error al guardar los cambios', 'error');
@@ -524,6 +530,12 @@ class DoctorsManager {
             if (this.saveDoctorsToStorage()) {
                 this.loadDoctors();
                 auth.showNotification('Médico eliminado correctamente', 'success');
+
+                // Notificar eliminación de datos
+                window.dispatchEvent(new CustomEvent('dataUpdated', {
+                    detail: { key: 'doctors', action: 'delete', id: id }
+                }));
+
                 console.log('✅ Médico eliminado:', doctor.name);
             }
         }

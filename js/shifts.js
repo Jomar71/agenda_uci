@@ -554,6 +554,12 @@ class ShiftsManager {
             this.renderCalendar();
             this.closeShiftModal();
             auth.showNotification(successMessage, 'success');
+
+            // Notificar actualización de datos
+            window.dispatchEvent(new CustomEvent('dataUpdated', {
+                detail: { key: 'shifts', action: formData.id ? 'update' : 'create', id: shiftData.id }
+            }));
+
         } else {
             auth.showNotification('Error al guardar el turno', 'error');
         }
@@ -642,6 +648,12 @@ class ShiftsManager {
                 this.renderCalendar();
                 this.closeShiftModal();
                 auth.showNotification('Turno eliminado correctamente', 'success');
+
+                // Notificar eliminación de datos
+                window.dispatchEvent(new CustomEvent('dataUpdated', {
+                    detail: { key: 'shifts', action: 'delete', id: parseInt(shiftId) }
+                }));
+
                 console.log('✅ Turno eliminado:', shiftId);
             }
         }

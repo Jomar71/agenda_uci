@@ -36,6 +36,8 @@ class App {
             console.log('🔄 Cambio en almacenamiento detectado:', e.key);
             if (e.key === 'doctors' || e.key === 'shifts' || e.key === 'currentUser') {
                 this.refreshCurrentSection();
+                // Forzar actualización de todos los managers
+                this.forceDataRefresh();
             }
         });
 
@@ -43,6 +45,13 @@ class App {
         window.addEventListener('dataUpdated', (e) => {
             console.log('🔄 Actualización de datos interna:', e.detail?.key);
             this.refreshCurrentSection();
+            this.forceDataRefresh();
+        });
+
+        // Evento personalizado para forzar actualización completa
+        window.addEventListener('forceRefresh', () => {
+            console.log('🔄 Forzando actualización completa desde evento personalizado');
+            this.forceRefresh();
         });
     }
 
@@ -75,11 +84,23 @@ class App {
     setupMobileMenu() {
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
         const nav = document.querySelector('.nav');
-        
+
         if (mobileMenuBtn && nav) {
-            mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 nav.classList.toggle('active');
                 console.log('📱 Menú móvil:', nav.classList.contains('active') ? 'abierto' : 'cerrado');
+
+                // Cambiar icono del botón
+                const icon = mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    if (nav.classList.contains('active')) {
+                        icon.className = 'fas fa-times';
+                    } else {
+                        icon.className = 'fas fa-bars';
+                    }
+                }
             });
         }
 
@@ -89,8 +110,42 @@ class App {
                 if (nav) {
                     nav.classList.remove('active');
                     console.log('📱 Menú móvil cerrado por navegación');
+
+                    // Resetear icono del botón
+                    const icon = mobileMenuBtn?.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-bars';
+                    }
                 }
             });
+        });
+
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (nav && !nav.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                nav.classList.remove('active');
+                console.log('📱 Menú móvil cerrado por click fuera');
+
+                // Resetear icono del botón
+                const icon = mobileMenuBtn?.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-bars';
+                }
+            }
+        });
+
+        // Cerrar menú al cambiar el tamaño de la ventana (pasar a desktop)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && nav) {
+                nav.classList.remove('active');
+                console.log('📱 Menú móvil cerrado por resize a desktop');
+
+                // Resetear icono del botón
+                const icon = mobileMenuBtn?.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-bars';
+                }
+            }
         });
     }
 
@@ -213,18 +268,42 @@ class App {
     // Método para forzar actualización (útil para debugging)
     forceRefresh() {
         console.log('🔄 Forzando actualización completa...');
+        this.forceDataRefresh();
+    }
+
+    // Método para forzar actualización de datos en todos los managers
+    forceDataRefresh() {
+        console.log('🔄 Forzando actualización de datos...');
+
+        // Actualizar médicos
         if (window.doctorsManager) {
             window.doctorsManager.loadDoctors();
             console.log('✅ Médicos actualizados');
         }
+
+        // Actualizar turnos
         if (window.shiftsManager) {
+            window.shiftsManager.loadShifts();
             window.shiftsManager.renderCalendar();
             console.log('✅ Turnos actualizados');
         }
+
+        // Actualizar calendario mensual
         if (window.calendarManager) {
             window.calendarManager.renderMonthlyPreview();
             console.log('✅ Calendario actualizado');
         }
+
+        // Actualizar estadísticas
+        if (window.doctorsManager) {
+            window.doctorsManager.updateStats();
+            console.log('✅ Estadísticas actualizadas');
+        }
+
+        // Disparar evento personalizado para notificar a otros componentes
+        window.dispatchEvent(new CustomEvent('dataRefreshed', {
+            detail: { timestamp: Date.now() }
+        }));
     }
 }
 

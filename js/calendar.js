@@ -28,13 +28,19 @@ class CalendarManager {
             console.log('🔄 Sincronizando calendario por cambios en almacenamiento');
             this.renderMonthlyPreview();
         });
-        
+
         // Evento personalizado para sincronización interna
         window.addEventListener('dataUpdated', (e) => {
             if (e.detail?.key === 'shifts' || e.detail?.key === 'doctors') {
                 console.log('🔄 Sincronizando calendario por actualización de datos');
                 this.renderMonthlyPreview();
             }
+        });
+
+        // Evento personalizado para forzar actualización
+        window.addEventListener('dataRefreshed', () => {
+            console.log('🔄 Sincronizando calendario por refresco forzado');
+            this.renderMonthlyPreview();
         });
     }
 
