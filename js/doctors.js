@@ -115,12 +115,44 @@ class DoctorsManager {
     saveDoctorsToStorage(doctorsToSave = null) {
         const doctors = doctorsToSave || this.doctors;
         try {
+            // Limpiar localStorage si hay demasiados datos
+            const dataSize = JSON.stringify(doctors).length;
+            if (dataSize > 4 * 1024 * 1024) { // 4MB límite aproximado
+                console.warn('⚠️ Datos muy grandes, limpiando localStorage...');
+                localStorage.clear();
+                // Recargar datos esenciales
+                if (window.auth?.currentUser) {
+                    localStorage.setItem('currentUser', JSON.stringify(window.auth.currentUser));
+                }
+                if (window.shiftsManager?.shifts) {
+                    localStorage.setItem('shifts', JSON.stringify(window.shiftsManager.shifts));
+                }
+            }
+
             localStorage.setItem('doctors', JSON.stringify(doctors));
-            console.log('💾 Médicos guardados en localStorage:', doctors.length);
+            console.log('💾 Médicos guardados en localStorage:', doctors.length, 'tamaño:', dataSize, 'bytes');
             return true;
         } catch (error) {
             console.error('❌ Error guardando médicos:', error);
-            auth.showNotification('Error al guardar los datos de médicos', 'error');
+
+            // Si es error de quota, intentar limpiar y reintentar
+            if (error.name === 'QuotaExceededError') {
+                console.warn('⚠️ Quota excedida, limpiando localStorage...');
+                try {
+                    localStorage.clear();
+                    // Recargar datos esenciales
+                    if (window.auth?.currentUser) {
+                        localStorage.setItem('currentUser', JSON.stringify(window.auth.currentUser));
+                    }
+                    localStorage.setItem('doctors', JSON.stringify(doctors));
+                    console.log('✅ Datos guardados después de limpieza');
+                    return true;
+                } catch (retryError) {
+                    console.error('❌ Error persistente guardando médicos:', retryError);
+                }
+            }
+
+            window.auth?.showNotification('Error al guardar los datos de médicos', 'error');
             return false;
         }
     }
@@ -142,8 +174,8 @@ class DoctorsManager {
                 <div class="no-doctors" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
                     <i class="fas fa-user-md" style="font-size: 3rem; color: #bdc3c7; margin-bottom: 1rem;"></i>
                     <h3 style="color: #7f8c8d; margin-bottom: 1rem;">No hay médicos registrados</h3>
-                    ${auth.isAdmin() ? 
-                        '<button class="btn btn-primary" onclick="doctorsManager.openDoctorModal()">Agregar Primer Médico</button>' : 
+                    ${window.auth?.isAdmin() ?
+                        '<button class="btn btn-primary" onclick="window.doctorsManager.openDoctorModal()">Agregar Primer Médico</button>' :
                         '<p style="color: #95a5a6;">Contacte al administrador para agregar médicos</p>'
                     }
                 </div>
@@ -154,9 +186,9 @@ class DoctorsManager {
             });
 
             // Botón para agregar médico (solo admin)
-            if (auth.isAdmin()) {
+            if (window.auth?.isAdmin()) {
                 html += `
-                    <div class="doctor-card add-doctor-card" onclick="doctorsManager.openDoctorModal()">
+                    <div class="doctor-card add-doctor-card" onclick="window.doctorsManager.openDoctorModal()">
                         <div class="add-doctor-content">
                             <i class="fas fa-user-plus"></i>
                             <h3>Agregar Médico</h3>
@@ -168,7 +200,10 @@ class DoctorsManager {
         }
 
         grid.innerHTML = html;
-        this.attachCardEvents();
+        // Pequeño delay para asegurar que el DOM esté actualizado
+        setTimeout(() => {
+            this.attachCardEvents();
+        }, 10);
         console.log('✅ Médicos renderizados correctamente');
     }
 
@@ -198,7 +233,7 @@ class DoctorsManager {
                     <button class="btn btn-primary view-shifts-btn" data-id="${doctor.id}">
                         <i class="fas fa-calendar"></i> Ver Turnos
                     </button>
-                    ${auth.isAdmin() ? `
+                    ${window.auth?.isAdmin() ? `
                         <button class="btn btn-secondary edit-doctor-btn" data-id="${doctor.id}">
                             <i class="fas fa-edit"></i> Editar
                         </button>
@@ -213,41 +248,58 @@ class DoctorsManager {
 
     attachCardEvents() {
         console.log('🔗 Adjuntando eventos a tarjetas de médicos...');
-        
-        // Botón ver turnos
+
+        // Limpiar eventos anteriores para evitar duplicados
         document.querySelectorAll('.view-shifts-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const doctorId = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
-                console.log('👀 Ver turnos del médico:', doctorId);
-                this.viewDoctorShifts(doctorId);
-            });
+            btn.removeEventListener('click', this.handleViewShifts.bind(this));
+            btn.addEventListener('click', this.handleViewShifts.bind(this));
         });
 
         // Botón editar (solo admin)
-        if (auth.isAdmin()) {
+        if (window.auth?.isAdmin()) {
             document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const doctorId = parseInt(e.target.closest('.edit-doctor-btn').dataset.id);
-                    console.log('✏️ Editando médico:', doctorId);
-                    this.openDoctorModal(doctorId);
-                });
+                btn.removeEventListener('click', this.handleEditDoctor.bind(this));
+                btn.addEventListener('click', this.handleEditDoctor.bind(this));
             });
 
             document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const doctorId = parseInt(e.target.closest('.delete-doctor-btn').dataset.id);
-                    console.log('🗑️ Eliminando médico:', doctorId);
-                    this.deleteDoctor(doctorId);
-                });
+                btn.removeEventListener('click', this.handleDeleteDoctor.bind(this));
+                btn.addEventListener('click', this.handleDeleteDoctor.bind(this));
             });
         }
-        
+
         console.log('✅ Eventos de tarjetas configurados');
     }
 
+    handleViewShifts(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const doctorId = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
+        console.log('👀 Ver turnos del médico:', doctorId);
+        this.viewDoctorShifts(doctorId);
+    }
+
+    handleEditDoctor(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const doctorIdStr = e.target.closest('.edit-doctor-btn').dataset.id;
+        const doctorId = typeof doctorIdStr === 'string' ? parseInt(doctorIdStr) : doctorIdStr;
+        console.log('✏️ Editando médico:', doctorId, 'tipo original:', typeof doctorIdStr);
+        this.openDoctorModal(doctorId);
+    }
+
+    handleDeleteDoctor(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const doctorIdStr = e.target.closest('.delete-doctor-btn').dataset.id;
+        const doctorId = typeof doctorIdStr === 'string' ? parseInt(doctorIdStr) : doctorIdStr;
+        console.log('🗑️ Eliminando médico:', doctorId, 'tipo original:', typeof doctorIdStr);
+        this.deleteDoctor(doctorId);
+    }
+
     openDoctorModal(doctorId = null) {
-        if (!auth.isAdmin()) {
-            auth.showNotification('Solo los administradores pueden gestionar médicos', 'error');
+        if (!window.auth?.isAdmin()) {
+            window.auth?.showNotification('Solo los administradores pueden gestionar médicos', 'error');
             return;
         }
 
@@ -344,14 +396,14 @@ class DoctorsManager {
 
         // Validar tipo de archivo
         if (!file.type.startsWith('image/')) {
-            auth.showNotification('Por favor selecciona un archivo de imagen válido (JPG, PNG, GIF)', 'error');
+            window.auth?.showNotification('Por favor selecciona un archivo de imagen válido (JPG, PNG, GIF)', 'error');
             event.target.value = '';
             return;
         }
 
         // Validar tamaño (máximo 2MB)
         if (file.size > 2 * 1024 * 1024) {
-            auth.showNotification('La imagen debe ser menor a 2MB', 'error');
+            window.auth?.showNotification('La imagen debe ser menor a 2MB', 'error');
             event.target.value = '';
             return;
         }
@@ -363,7 +415,7 @@ class DoctorsManager {
             console.log('✅ Foto cargada correctamente');
         };
         reader.onerror = () => {
-            auth.showNotification('Error al leer la imagen', 'error');
+            window.auth?.showNotification('Error al leer la imagen', 'error');
             event.target.value = '';
             console.error('❌ Error leyendo la imagen');
         };
@@ -431,7 +483,7 @@ class DoctorsManager {
         if (this.saveDoctorsToStorage()) {
             this.loadDoctors();
             this.closeDoctorModal();
-            auth.showNotification(successMessage, 'success');
+            window.auth?.showNotification(successMessage, 'success');
 
             // Notificar actualización de datos
             window.dispatchEvent(new CustomEvent('dataUpdated', {
@@ -440,7 +492,7 @@ class DoctorsManager {
 
             return true;
         } else {
-            auth.showNotification('Error al guardar los cambios', 'error');
+            window.auth?.showNotification('Error al guardar los cambios', 'error');
             return false;
         }
     }
@@ -464,7 +516,7 @@ class DoctorsManager {
         const requiredFields = ['name', 'specialty', 'email', 'phone', 'username'];
         for (const field of requiredFields) {
             if (!data[field] || data[field].trim() === '') {
-                auth.showNotification(`El campo ${field} es requerido`, 'error');
+                window.auth?.showNotification(`El campo ${field} es requerido`, 'error');
                 return false;
             }
         }
@@ -472,22 +524,22 @@ class DoctorsManager {
         // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(data.email)) {
-            auth.showNotification('Por favor ingresa un email válido', 'error');
+            window.auth?.showNotification('Por favor ingresa un email válido', 'error');
             return false;
         }
 
         // Para nuevos médicos, validar contraseña
         if (!data.id && !data.password) {
-            auth.showNotification('La contraseña es requerida para nuevos médicos', 'error');
+            window.auth?.showNotification('La contraseña es requerida para nuevos médicos', 'error');
             return false;
         }
 
         // Verificar username único
-        const existingDoctor = this.doctors.find(d => 
+        const existingDoctor = this.doctors.find(d =>
             d.username === data.username && d.id !== parseInt(data.id || 0)
         );
         if (existingDoctor) {
-            auth.showNotification('El nombre de usuario ya está en uso', 'error');
+            window.auth?.showNotification('El nombre de usuario ya está en uso', 'error');
             return false;
         }
 
@@ -496,14 +548,18 @@ class DoctorsManager {
     }
 
     deleteDoctor(id) {
-        if (!auth.isAdmin()) {
-            auth.showNotification('No tiene permisos para eliminar médicos', 'error');
+        if (!window.auth?.isAdmin()) {
+            window.auth?.showNotification('No tiene permisos para eliminar médicos', 'error');
             return;
         }
 
-        const doctor = this.doctors.find(d => d.id === id);
+        // Asegurar que id sea un número
+        const doctorId = typeof id === 'string' ? parseInt(id) : id;
+
+        const doctor = this.doctors.find(d => d.id === doctorId);
         if (!doctor) {
-            console.error('❌ Médico no encontrado para eliminar:', id);
+            console.error('❌ Médico no encontrado para eliminar:', doctorId, 'tipo:', typeof id);
+            console.log('📋 Médicos disponibles:', this.doctors.map(d => ({id: d.id, name: d.name})));
             return;
         }
 
@@ -518,22 +574,22 @@ class DoctorsManager {
 
         if (confirm(confirmMessage)) {
             // Eliminar médico
-            this.doctors = this.doctors.filter(d => d.id !== id);
-            
+            this.doctors = this.doctors.filter(d => d.id !== doctorId);
+
             // Eliminar turnos del médico si existe el gestor de turnos
             if (window.shiftsManager && doctorShifts.length > 0) {
-                const updatedShifts = shifts.filter(shift => shift.doctorId !== id);
+                const updatedShifts = shifts.filter(shift => shift.doctorId !== doctorId);
                 window.shiftsManager.saveShifts(updatedShifts);
                 console.log(`🗑️ Eliminados ${doctorShifts.length} turnos del médico`);
             }
 
             if (this.saveDoctorsToStorage()) {
                 this.loadDoctors();
-                auth.showNotification('Médico eliminado correctamente', 'success');
+                window.auth?.showNotification('Médico eliminado correctamente', 'success');
 
                 // Notificar eliminación de datos
                 window.dispatchEvent(new CustomEvent('dataUpdated', {
-                    detail: { key: 'doctors', action: 'delete', id: id }
+                    detail: { key: 'doctors', action: 'delete', id: doctorId }
                 }));
 
                 console.log('✅ Médico eliminado:', doctor.name);
@@ -549,8 +605,8 @@ class DoctorsManager {
         if (turnosLink) {
             turnosLink.click();
         }
-        
-        auth.showNotification(`Mostrando turnos del médico seleccionado`, 'info');
+
+        window.auth?.showNotification(`Mostrando turnos del médico seleccionado`, 'info');
         
         // En una implementación más avanzada, aquí filtrarías el calendario
         // para mostrar solo los turnos de este médico
