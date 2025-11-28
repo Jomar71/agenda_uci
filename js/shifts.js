@@ -124,17 +124,18 @@ class ShiftsManager {
     }
 
     setupRealtimeSync() {
-        console.log('🔥 Configurando sincronización en tiempo real para turnos...');
+    console.log('🔥 Configurando sincronización en tiempo real para turnos...');
 
-        if (window.firestoreService) {
-            this.firestoreListener = window.firestoreService.listenToCollection('shifts', (changes) => {
+    // Verificar después de un breve delay
+    setTimeout(() => {
+        if (window.firebaseService && window.firebaseService.isAvailable) {
+            this.firestoreListener = window.firebaseService.listenToCollection('shifts', (changes) => {
                 console.log('🔥 Cambios en tiempo real detectados en turnos:', changes.length);
                 let needsUpdate = false;
 
                 changes.forEach(change => {
                     if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
                         needsUpdate = true;
-                        console.log(`🔥 Turno ${change.type}:`, change.data.date || change.id);
                     }
                 });
 
@@ -146,10 +147,12 @@ class ShiftsManager {
                     }));
                 }
             });
+            console.log('✅ Sincronización en tiempo real configurada para turnos');
         } else {
-            console.log('⚠️ Firestore no disponible, sincronización en tiempo real deshabilitada');
+            console.log('⚠️ Firebase no disponible, sincronización en tiempo real deshabilitada');
         }
-    }
+    }, 1000);
+}
 
     loadShifts() {
         console.log('📂 Cargando turnos desde almacenamiento...');
