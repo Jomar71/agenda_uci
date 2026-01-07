@@ -7,7 +7,6 @@ package-lock.json
 yarn.lock
 
 # ==================== FIREBASE ====================
-js/firebase-config.js
 js/config.js
 .firebase/
 firebase-debug.log

@@ -1,4 +1,5 @@
 
+import './firebase-config.js';
 import { AuthManager } from './auth.js';
 import { DoctorsManager } from './doctors.js';
 import { ShiftsManager } from './shifts.js';
