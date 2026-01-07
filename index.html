@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,12 +8,18 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Agenda Médica - UCI</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <!-- CSS Moderno -->
+    <link rel="stylesheet" href="https://unpkg.com/open-props">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=3.0">
+    <link rel="stylesheet" href="css/styles-dashboard.css?v=1.0">
+    <link rel="stylesheet" href="css/responsive.css?v=3.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/firebase-service.js"></script>
+    <!-- PDF Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -45,51 +52,73 @@
     <!-- Main Content -->
     <main class="main">
         <!-- Sección Inicio -->
-        <section id="inicio" class="section active">
-            <div class="welcome-section">
-                <div class="welcome-header">
-                    <h2>Bienvenido al Sistema de Gestión UCI</h2>
-                    <p>Sistema especializado para la gestión de turnos médicos en Unidades de Cuidados Intensivos</p>
-                </div>
-                
-                <div class="about-uci">
-                    <h3>Sobre Nuestra UCI</h3>
-                    <div class="about-content">
-                        <div class="about-text">
-                            <p>Nuestra Unidad de Cuidados Intensivos cuenta con tecnología de punta y personal altamente calificado para brindar la mejor atención a pacientes críticos.</p>
-                            <ul>
-                                <li><i class="fas fa-check"></i> Monitoreo 24/7</li>
-                                <li><i class="fas fa-check"></i> Equipo multidisciplinario</li>
-                                <li><i class="fas fa-check"></i> Protocolos actualizados</li>
-                                <li><i class="fas fa-check"></i> Atención personalizada</li>
-                            </ul>
-                        </div>
-                        <div class="about-stats">
-                            <div class="stat-card">
-                                <i class="fas fa-user-md"></i>
-                                <span id="total-doctors">0</span>
-                                <p>Médicos Especializados</p>
+        <div id="inicio" class="section active animate__animated animate__fadeIn">
+            <!-- Hero Header -->
+            <div class="hero-header text-center mb-5">
+                <h2
+                    style="font-size: 2.5rem; color: #1f2937; margin-bottom: 0.5rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                    Bienvenido al Sistema de Gestión UCI</h2>
+                <p class="text-muted" style="font-size: 1.1rem; color: #9ca3af;">Sistema especializado para la gestión
+                    de turnos médicos en Unidades de Cuidados Intensivos</p>
+            </div>
+
+            <!-- Top Panel: Info & Stats -->
+            <div class="dashboard-panel mb-4">
+                <div class="dashboard-split">
+                    <!-- Left: Text Info -->
+                    <div class="dashboard-info-col">
+                        <p class="lead-text" style="color: #d1d5db; font-size: 1.1rem; line-height: 1.6;">Nuestra Unidad
+                            de Cuidados Intensivos cuenta con tecnología de punta y personal altamente calificado para
+                            brindar la mejor atención a pacientes críticos.</p>
+
+                        <div class="features-list" style="margin-top: 2rem;">
+                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
+                                    style="color: #e5e7eb;">Monitoreo 24/7</span>
                             </div>
-                            <div class="stat-card">
-                                <i class="fas fa-bed"></i>
-                                <span>20</span>
-                                <p>Camas UCI</p>
+                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
+                                    style="color: #e5e7eb;">Equipo multidisciplinario</span>
                             </div>
-                            <div class="stat-card">
-                                <i class="fas fa-clock"></i>
-                                <span>24/7</span>
-                                <p>Atención Continua</p>
+                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
+                                    style="color: #e5e7eb;">Protocolos actualizados</span>
+                            </div>
+                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
+                                    style="color: #e5e7eb;">Atención personalizada</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="monthly-shifts-preview">
-                    <h3>Turnos del Mes</h3>
-                    <div id="monthly-calendar"></div>
+                    <!-- Right: Stat Cards Stack -->
+                    <div class="dashboard-stats-col">
+                        <div class="stat-card-blue card-gradient-1">
+                            <i class="fas fa-user-md"></i>
+                            <div class="stat-value" id="total-doctors">3</div>
+                            <div class="stat-label">Médicos Especializados</div>
+                        </div>
+                        <div class="stat-card-blue card-gradient-2">
+                            <i class="fas fa-procedures"></i>
+                            <div class="stat-value">20</div>
+                            <div class="stat-label">Camas UCI</div>
+                        </div>
+                        <div class="stat-card-blue card-gradient-3">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-value">24/7</div>
+                            <div class="stat-label">Atención Continua</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
+
+            <!-- Bottom Panel: Calendar -->
+            <div class="dashboard-panel">
+                <div id="monthly-calendar" style="width: 100%;"></div>
+            </div>
+        </div>
+        </div>
+        </div>
 
         <!-- Sección Médicos -->
         <section id="medicos" class="section">
@@ -147,8 +176,12 @@
                         <button id="manage-shifts" class="btn btn-primary">Gestionar Turnos</button>
                     </div>
                     <div class="admin-card">
+                        <h3><i class="fas fa-file-pdf"></i> Reportes</h3>
+                        <button id="generate-reports" class="btn btn-primary">Generar Reportes</button>
+                    </div>
+                    <div class="admin-card">
                         <h3><i class="fas fa-download"></i> Backup</h3>
-                        <button id="backup-data" class="btn btn-secondary">Descargar Backup Excel</button>
+                        <button id="backup-data" class="btn btn-secondary">Descargar Backup</button>
                     </div>
                 </div>
             </div>
@@ -157,7 +190,7 @@
 
     <!-- Modales -->
     <!-- Modal Login -->
-    <div id="login-modal" class="modal">
+    <div id="login-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Iniciar Sesión</h2>
@@ -176,64 +209,60 @@
     </div>
 
     <!-- Modal Doctor -->
-    <div id="doctor-modal" class="modal">
+    <div id="doctor-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2 id="doctor-modal-title">Detalles del Médico</h2>
+            <h2 id="doctor-modal-title">Nuevo Médico</h2>
             <form id="doctor-form">
                 <input type="hidden" id="doctor-id">
-                
-                <!-- Foto del médico -->
-                <div class="form-group">
-                    <label for="doctor-photo">Foto del Médico:</label>
-                    <div id="doctor-photo-preview" style="margin-bottom: 10px;"></div>
-                    <input type="file" id="doctor-photo" accept="image/*">
-                    <small style="color: #666;">Formatos: JPG, PNG, GIF (Máx. 2MB)</small>
+
+                <!-- Foto Centrada -->
+                <div class="photo-upload-container">
+                    <div id="doctor-photo-preview">
+                        <i class="fas fa-user-md photo-upload-icon"></i>
+                    </div>
+                    <p class="photo-status" id="photo-status-text">No hay foto seleccionada</p>
+                    <input type="file" id="doctor-photo" accept="image/*" class="form-control"
+                        style="max-width: 250px;">
+                    <small style="color: #64748b; display: block; margin-top: 5px;">Formatos: JPG, PNG, GIF (Máx.
+                        2MB)</small>
                 </div>
 
+                <!-- Inputs Grid -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="doctor-name">Nombre completo:</label>
-                        <input type="text" id="doctor-name" required>
+                        <input type="text" id="doctor-name" placeholder="Nombre completo" required>
                     </div>
                     <div class="form-group">
-                        <label for="doctor-specialty">Especialidad:</label>
-                        <input type="text" id="doctor-specialty" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="doctor-email">Email:</label>
-                        <input type="email" id="doctor-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="doctor-phone">Teléfono:</label>
-                        <input type="tel" id="doctor-phone" required>
+                        <input type="text" id="doctor-specialty" placeholder="Especialidad" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="doctor-username">Usuario:</label>
-                        <input type="text" id="doctor-username" required>
+                        <input type="email" id="doctor-email" placeholder="Email" required>
                     </div>
                     <div class="form-group">
-                        <label for="doctor-password">Contraseña:</label>
-                        <input type="password" id="doctor-password">
-                        <small style="color: #666; display: block; margin-top: 0.25rem;">
-                            Para nuevos médicos, la contraseña es obligatoria
-                        </small>
+                        <input type="tel" id="doctor-phone" placeholder="Teléfono" required>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-primary" id="save-doctor-btn">Guardar</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-doctor-btn">Cancelar</button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="text" id="doctor-username" placeholder="Usuario" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="doctor-password" placeholder="Contraseña requerida" required>
+                        <small style="color: #64748b; font-size: 0.75rem;">Para nuevos médicos, la contraseña es
+                            obligatoria</small>
+                    </div>
                 </div>
+
+                <button type="submit" class="btn btn-primary" id="save-doctor-btn">Guardar Médico</button>
             </form>
         </div>
     </div>
 
     <!-- Modal Turno -->
-    <div id="shift-modal" class="modal">
+    <div id="shift-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="shift-modal-title">Nuevo Turno</h2>
@@ -251,24 +280,23 @@
                         <input type="date" id="shift-date" required>
                     </div>
                     <div class="form-group">
-                        <label for="shift-type">Tipo de Turno:</label>
+                        <label for="shift-type">Tipo de Turno (12h):</label>
                         <select id="shift-type" required>
                             <option value="">Seleccionar tipo</option>
-                            <option value="guardia">Guardia</option>
-                            <option value="consulta">Consulta</option>
-                            <option value="emergencia">Emergencia</option>
-                            <option value="descanso">Descanso</option>
+                            <option value="mañana">Día (07:00 - 19:00)</option>
+                            <option value="noche">Noche (19:00 - 07:00)</option>
+                            <option value="especial">Especial / UCI</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="shift-start">Hora Inicio:</label>
-                        <input type="time" id="shift-start" required>
+                        <input type="time" id="shift-start" value="07:00" required>
                     </div>
                     <div class="form-group">
                         <label for="shift-end">Hora Fin:</label>
-                        <input type="time" id="shift-end" required>
+                        <input type="time" id="shift-end" value="19:00" required>
                     </div>
                 </div>
                 <div class="form-group">
@@ -278,7 +306,8 @@
                 <div class="form-actions">
                     <button type="button" class="btn btn-primary" id="save-shift-btn">Guardar</button>
                     <button type="button" class="btn btn-secondary" id="cancel-shift-btn">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="delete-shift-btn" style="display: none;">Eliminar</button>
+                    <button type="button" class="btn btn-danger" id="delete-shift-btn"
+                        style="display: none;">Eliminar</button>
                 </div>
             </form>
         </div>
@@ -288,18 +317,8 @@
     <div id="notifications"></div>
 
     <!-- Scripts -->
-       <script src="js/auth.js"></script>
-    
-    <!-- Firebase Config (primero) -->
-    <script type="module" src="js/firebase-config.js"></script>
-    
-    <!-- Firebase Service (segundo) -->
-    <script src="js/firebase-service-simple.js"></script>
-    
-    <!-- Managers (después de Firebase) -->
-    <script src="js/doctors.js"></script>
-    <script src="js/shifts.js"></script>
-    <script src="js/calendar.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Scripts Modulares -->
+    <script type="module" src="js/app.js"></script>
 </body>
+
 </html>

@@ -1,972 +1,864 @@
-/* Variables y Reset */
+/* Dark Premium Theme - SIMED Style */
+@import "https://unpkg.com/open-props";
+
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --accent-color: #e74c3c;
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --danger-color: #e74c3c;
-    --light-color: #ecf0f1;
-    --dark-color: #2c3e50;
-    --text-color: #333;
-    --border-color: #bdc3c7;
-    --shadow: 0 2px 10px rgba(0,0,0,0.1);
-    --border-radius: 8px;
+    /* Backgrounds */
+    --bg-body: #111827;
+    /* Deep Charcoal/Black */
+    --bg-card: #1f2937;
+    /* Dark Slate */
+    --bg-header: #1e3a8a;
+    /* Dark Blue from screenshot header */
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+    /* Indigo to Blue */
+    --gradient-card-1: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    /* Purple to Blue */
+    --gradient-card-2: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+    /* Blue to Cyan */
+    --gradient-card-3: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    /* Indigo to Purple */
+
+    /* Colors */
+    --primary-color: #3b82f6;
+    --text-main: #f3f4f6;
+    /* Off-white */
+    --text-muted: #9ca3af;
+    /* Gray */
+
+    /* Functional */
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+
+    /* Layout */
+    --header-height: 70px;
+    --border-radius: 12px;
+    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+
+    /* Font */
+    --font-heading: 'Segoe UI', sans-serif;
 }
 
+/* Base Reset */
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-heading);
+    background-color: var(--bg-body);
+    color: var(--text-main);
     line-height: 1.6;
-    color: var(--text-color);
-    background-color: #f8f9fa;
-    min-height: 100vh;
 }
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    padding: 1rem 0;
-    box-shadow: var(--shadow);
-    position: sticky;
+    background-color: var(--bg-header);
+    height: var(--header-height);
+    position: fixed;
     top: 0;
+    width: 100%;
     z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem;
+    height: 100%;
+    padding: 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.logo i {
-    font-size: 2rem;
-}
-
-.logo h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
+    gap: 0.75rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
 }
 
 .nav-list {
     display: flex;
+    gap: 10px;
     list-style: none;
-    gap: 2rem;
 }
 
 .nav-link {
-    color: white;
     text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
     padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    transition: background-color 0.3s;
-    white-space: nowrap;
+    border-radius: 4px;
+    /* Flatter look from screenshot */
+    transition: all 0.2s;
+    font-size: 0.95rem;
 }
 
-.nav-link:hover,
-.nav-link.active {
-    background-color: rgba(255,255,255,0.2);
-}
-
-.user-menu {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-shrink: 0;
-}
-
-.mobile-menu-btn {
-    display: none;
-    background: none;
-    border: none;
+.nav-link.active,
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
     color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
 }
 
-/* Main Content */
+/* Main */
 .main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    min-height: calc(100vh - 200px);
+    margin-top: var(--header-height);
+    padding: 30px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: calc(100vh - var(--header-height));
 }
 
 .section {
     display: none;
+    animation: animate__fadeIn 0.5s;
 }
 
 .section.active {
     display: block;
-    animation: fadeIn 0.5s ease-in;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Welcome Section */
-.welcome-header {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.welcome-header h2 {
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-    font-size: clamp(2rem, 5vw, 2.5rem);
-}
-
-.welcome-header p {
-    font-size: clamp(1rem, 3vw, 1.2rem);
-    color: #666;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.about-uci {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 2rem;
-}
-
-.about-uci h3 {
-    color: var(--primary-color);
-    margin-bottom: 1.5rem;
-    text-align: center;
-    font-size: clamp(1.5rem, 4vw, 1.8rem);
-}
-
-.about-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-    align-items: start;
-}
-
-.about-text ul {
-    list-style: none;
-    margin-top: 1rem;
-}
-
-.about-text li {
-    padding: 0.5rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.about-text li i {
-    color: var(--success-color);
-}
-
-.about-stats {
-    display: grid;
-    gap: 1rem;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+h1,
+h2,
+h3 {
     color: white;
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
 }
 
-.stat-card i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+h2 {
+    font-size: 1.8rem;
+    border-left: 5px solid var(--primary-color);
+    padding-left: 15px;
 }
 
-.stat-card span {
-    display: block;
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: bold;
-    margin-bottom: 0.5rem;
+/* Dashboard Cards (Welcome & Admin) */
+.admin-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
 }
 
-/* Monthly Calendar Preview */
-.monthly-shifts-preview {
-    background: white;
+.admin-card {
+    background: var(--gradient-card-1);
     padding: 2rem;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-}
-
-.monthly-shifts-preview h3 {
-    color: var(--primary-color);
-    margin-bottom: 1.5rem;
     text-align: center;
-    font-size: clamp(1.5rem, 4vw, 1.8rem);
-}
-
-#monthly-calendar {
-    min-height: 400px;
-    background: #f8f9fa;
-    border-radius: var(--border-radius);
-    padding: 1rem;
-}
-
-/* Section Headers */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.section-header h2 {
-    color: var(--primary-color);
-    font-size: clamp(1.8rem, 4vw, 2rem);
-}
-
-.controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.search-box {
+    box-shadow: var(--shadow-soft);
     position: relative;
-    flex: 1;
-    min-width: 250px;
+    overflow: hidden;
+    color: white;
+    transition: transform 0.3s;
 }
 
-.search-box input {
-    padding: 0.5rem 2.5rem 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+/* Vary gradients for visual interest like in screenshot */
+.admin-card:nth-child(2) {
+    background: var(--gradient-card-2);
+}
+
+.admin-card:nth-child(3) {
+    background: var(--gradient-card-3);
+}
+
+.admin-card:hover {
+    transform: translateY(-5px);
+}
+
+.admin-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.admin-card i {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Buttons inside cards */
+.admin-card .btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     width: 100%;
+    justify-content: center;
+    backdrop-filter: blur(5px);
 }
 
-.search-box i {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
+.admin-card .btn:hover {
+    background: white;
+    color: var(--primary-color);
 }
 
 /* Doctors Grid */
 .doctors-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    gap: 25px;
+    margin-top: 30px;
+    /* Added spacing from filters */
+}
+
+/* Ensure outline buttons are visible in dark mode */
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Specific fix for view shifts button text visibility */
+.view-shifts-btn {
+    color: #60a5fa !important;
+    /* Brighter blue for visibility */
+    border-color: #60a5fa !important;
+}
+
+.view-shifts-btn:hover {
+    color: white !important;
 }
 
 .doctor-card {
-    background: white;
+    background-color: var(--bg-card);
+    border: 1px solid #374151;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    padding: 1.5rem;
-    transition: transform 0.3s, box-shadow 0.3s;
-    border-left: 4px solid var(--secondary-color);
+    padding: 2rem;
     text-align: center;
-    display: flex;
-    flex-direction: column;
+    box-shadow: var(--shadow-soft);
+}
+
+.doctor-photo-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    border: 3px solid var(--primary-color);
+    padding: 3px;
+    background: transparent;
+}
+
+.doctor-photo-wrapper img {
+    width: 100%;
     height: 100%;
-    min-height: 380px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-.doctor-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-}
-
-.doctor-card h3 {
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    font-size: clamp(1.2rem, 3vw, 1.4rem);
-}
-
-.doctor-specialty {
-    color: var(--secondary-color);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.doctor-contact {
-    color: #666;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.doctor-actions {
-    margin-top: auto;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    flex-direction: column;
-}
-
-.doctor-actions .btn {
-    flex: 1;
-    min-height: 44px;
-    font-size: 0.9rem;
-    padding: 0.75rem 1rem;
-}
-
-/* Estilos para la tarjeta de agregar médico */
+/* Add Doctor Card Special Styling */
 .add-doctor-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    background: rgba(59, 130, 246, 0.1);
+    /* Subtle blue tint */
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px dashed rgba(255,255,255,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 380px;
+    min-height: 320px;
+    /* Match height of other cards */
 }
 
 .add-doctor-card:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-color);
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    border-color: rgba(255,255,255,0.6);
 }
 
 .add-doctor-content {
     text-align: center;
-    padding: 2rem;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .add-doctor-content i {
-    font-size: clamp(2rem, 6vw, 3rem);
+    font-size: 3rem;
     margin-bottom: 1rem;
-    opacity: 0.8;
+    color: var(--primary-color);
 }
 
 .add-doctor-content h3 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
     margin-bottom: 0.5rem;
-    font-size: clamp(1.3rem, 4vw, 1.5rem);
+    opacity: 0.9;
 }
 
 .add-doctor-content p {
-    opacity: 0.8;
     font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
-/* Calendar */
-.calendar-container {
-    background: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-}
-
-.calendar-header {
-    background: var(--primary-color);
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.calendar-header h3 {
-    margin: 0;
-    font-size: clamp(1.2rem, 3vw, 1.5rem);
-}
-
-.view-controls {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.view-btn.active {
-    background-color: rgba(255,255,255,0.2);
-}
-
-#calendar-view {
-    padding: 1rem;
-    min-height: 600px;
-    overflow-x: auto;
-}
-
-/* Calendar Views */
-.calendar-month {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    background-color: var(--border-color);
-    min-width: 800px;
-}
-
-.calendar-day-header {
-    background: var(--light-color);
-    padding: 1rem;
-    text-align: center;
-    font-weight: 600;
-    font-size: clamp(0.8rem, 2vw, 1rem);
-}
-
-.calendar-day {
-    background: white;
-    padding: 0.5rem;
-    min-height: 100px;
-    border: 1px solid var(--border-color);
-    position: relative;
-}
-
-.calendar-day.other-month {
-    background: #f8f9fa;
-    color: #999;
-}
-
-.day-number {
-    font-weight: bold;
+.doctor-info h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
     margin-bottom: 0.5rem;
-    font-size: clamp(0.8rem, 2vw, 1rem);
 }
 
-.shift-item {
-    background: var(--secondary-color);
-    color: white;
-    padding: 0.25rem 0.5rem;
-    margin-bottom: 0.25rem;
-    border-radius: 4px;
-    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
-    cursor: pointer;
-    transition: opacity 0.3s;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.doctor-info p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
 }
 
-.shift-item:hover {
-    opacity: 0.8;
+.badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
 }
 
-.shift-item.guardia { background: var(--warning-color); }
-.shift-item.consulta { background: var(--success-color); }
-.shift-item.emergencia { background: var(--danger-color); }
-.shift-item.descanso { background: #95a5a6; }
-
-/* Admin Dashboard */
-.admin-dashboard {
-    background: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    padding: 2rem;
-}
-
-.admin-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.admin-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    text-align: center;
-}
-
-.admin-card h3 {
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: clamp(1.2rem, 3vw, 1.4rem);
-}
-
-/* Buttons */
+/* Standard Buttons */
 .btn {
-    padding: 0.5rem 1rem;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
     border: none;
-    border-radius: var(--border-radius);
+    font-weight: 600;
     cursor: pointer;
-    font-size: clamp(0.8rem, 2vw, 0.9rem);
-    font-weight: 500;
-    transition: all 0.3s;
-    text-decoration: none;
+    color: white;
+    transition: all 0.2s;
+    font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
+    gap: 8px;
 }
 
 .btn-primary {
-    background: var(--secondary-color);
-    color: white;
+    background: var(--primary-color);
 }
 
 .btn-primary:hover {
-    background: #2980b9;
-    transform: translateY(-2px);
+    background: #2563eb;
 }
 
 .btn-secondary {
-    background: var(--light-color);
-    color: var(--text-color);
+    background: #4b5563;
 }
 
 .btn-secondary:hover {
-    background: #bdc3c7;
+    background: #374151;
 }
 
 .btn-danger {
     background: var(--danger-color);
-    color: white;
 }
 
-.btn-danger:hover {
-    background: #c0392b;
-}
-
-/* Forms */
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-row {
+/* Calendar */
+.calendar-grid-header {
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 15px 0;
+    border-top: 2px solid var(--primary-color);
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(7, 1fr);
+    /* 7 columns for days */
+    text-align: center;
 }
 
-.form-group label {
+.calendar-month-grid {
+    background: #374151;
+    /* Dark lines */
+    gap: 1px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* 7 columns grid */
+}
+
+.calendar-day {
+    background: white;
+    /* High contrast cells like screenshot */
+    color: #111827;
+    min-height: 100px;
+}
+
+.calendar-day.other-month {
+    background: #e5e7eb;
+    color: #9ca3af;
+}
+
+.day-number {
+    font-weight: bold;
+    margin-bottom: 5px;
     display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--primary-color);
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
-}
-
-/* Modals */
+/* Modal */
+/* Modal Overlay Fixed Position */
 .modal {
     display: none;
+    /* Hidden by default */
     position: fixed;
-    z-index: 1001;
+    /* Stay in place */
+    z-index: 9999;
+    /* Sit on top - high z-index */
     left: 0;
     top: 0;
     width: 100%;
+    /* Full width */
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    animation: fadeIn 0.3s;
-    overflow-y: auto;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Black w/ opacity */
+    backdrop-filter: blur(5px);
 }
 
+/* Modal Styling to Match Reference */
 .modal-content {
-    background-color: white;
-    margin: 5% auto;
+    background-color: #1e293b;
+    /* Dark Blue-Gray like reference */
+    color: white;
+    border: none;
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 2rem;
-    border-radius: var(--border-radius);
-    width: 90%;
+    border-radius: 8px;
+    /* Sharper corners */
+    width: 95%;
     max-width: 500px;
+    /* Narrower width */
+    margin: 5vh auto;
     position: relative;
-    animation: slideIn 0.3s;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
 }
 
-@keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.modal-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    color: white;
+    font-weight: 700;
 }
 
 .close {
     position: absolute;
-    right: 1rem;
-    top: 1rem;
+    right: 20px;
+    top: 20px;
+    color: #94a3b8;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #999;
+    transition: color 0.2s;
 }
 
 .close:hover {
-    color: var(--danger-color);
+    color: white;
+}
+
+/* Photo Upload Section */
+.photo-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.photo-upload-icon {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+}
+
+.photo-status {
+    color: #94a3b8;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Custom File Input to match reference "Seleccionar archivo" button style */
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-input-wrapper input[type=file] {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+}
+
+/* Form Layout */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Hidden labels concept if we want just placeholders, but reference shows empty boxes. 
+   We will keep labels for accessibility but possibly hide them visually or style them subtly. 
+   Actually, reference image shows NO labels above inputs, just placeholders likely? 
+   No, reference has inputs that look empty. I will style inputs deeply. */
+
+label {
+    display: none;
+    /* Hiding labels as per reference look */
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    background-color: #334155;
+    /* Lighter than bg */
+    border: 1px solid #475569;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Specific button styling for modal */
+.modal-content .btn-primary {
+    width: 100%;
+    padding: 12px;
+    margin-top: 1rem;
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+}
+
+.modal-content .btn-primary:hover {
+    background: #334155;
+    color: white;
+    border-color: #94a3b8;
+}
+
+/* Welcome Section Specifics from Screenshot */
+.stats-container {
+    display: grid;
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.8) 0%, rgba(17, 24, 39, 0.8) 100%);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid #374151;
+    text-align: center;
+}
+
+.stat-card i {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
 }
 
 /* Notifications */
-#notifications {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1002;
-    max-width: 400px;
-}
-
 .notification {
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 0.5rem;
-    border-left: 4px solid var(--success-color);
-    animation: slideInRight 0.3s;
-}
-
-.notification.error {
-    border-left-color: var(--danger-color);
-}
-
-.notification.warning {
-    border-left-color: var(--warning-color);
-}
-
-.notification.info {
-    border-left-color: var(--secondary-color);
-}
-
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOutRight {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-
-/* Utility Classes */
-.text-center { text-align: center; }
-.mt-1 { margin-top: 1rem; }
-.mb-1 { margin-bottom: 1rem; }
-.hidden { display: none !important; }
-
-/* Estilos adicionales para correcciones */
-.calendar-preview-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    background-color: var(--border-color);
-    min-width: 600px;
-}
-
-.preview-day-header {
-    background: var(--primary-color);
+    background: var(--bg-card);
     color: white;
-    padding: 0.5rem;
-    text-align: center;
-    font-weight: 600;
-    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+    border-left-width: 5px;
 }
 
-.preview-day {
-    background: white;
-    padding: 0.25rem;
-    min-height: 60px;
-    border: 1px solid var(--border-color);
-    position: relative;
+/* Mobile */
+@media (max-width: 768px) {
+    .nav {
+        background: var(--bg-card);
+    }
+
+    .nav-link {
+        color: white;
+    }
 }
 
-.preview-day.other-month {
-    background: #f8f9fa;
-    color: #999;
+/* View Toggle Buttons */
+.view-btn {
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    transition: all 0.2s;
 }
 
-.preview-day.today {
-    background: #e3f2fd;
-    border: 2px solid var(--secondary-color);
+.view-btn:hover {
+    border-color: var(--primary-color);
+    color: white;
 }
 
-.preview-day-number {
-    font-weight: bold;
-    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
-    margin-bottom: 0.25rem;
+.view-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
 }
 
-.preview-shifts {
+/* Calendar Header & Navigation */
+.calendar-header {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
 }
 
-.preview-shift {
-    height: 4px;
-    border-radius: 2px;
+.calendar-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#prev-period,
+#next-period {
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     cursor: pointer;
-}
-
-.more-shifts {
-    font-size: 0.7rem;
-    color: #666;
-    text-align: center;
-    margin-top: 2px;
-}
-
-/* Estilos para el calendario semanal */
-.calendar-week {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1rem;
-    min-width: 800px;
-}
-
-.calendar-week .calendar-day {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 0.5rem;
-}
-
-.calendar-week .day-header {
-    background: var(--light-color);
-    padding: 0.5rem;
-    text-align: center;
-    font-weight: 600;
-    margin: -0.5rem -0.5rem 0.5rem -0.5rem;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    font-size: clamp(0.8rem, 2vw, 0.9rem);
-}
-
-/* Estilos para el calendario diario */
-.calendar-day-detailed {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    gap: 1rem;
-    min-width: 600px;
-}
-
-.time-slots {
-    display: flex;
-    flex-direction: column;
-}
-
-.time-slot {
-    padding: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    height: 60px;
     display: flex;
     align-items: center;
-    font-size: 0.9rem;
-    color: #666;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-.shifts-timeline {
+#prev-period:hover,
+#next-period:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.calendar-container {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid #374151;
+    box-shadow: var(--shadow-soft);
+}
+
+/* Doctor Filters Compact Styling */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 2rem;
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-box {
     position: relative;
-    min-height: 1440px; /* 24 horas * 60 minutos */
+    width: 250px;
+    /* Fixed smaller width */
 }
 
-.timeline-shift {
-    position: absolute;
-    left: 0;
-    right: 0;
-    background: var(--secondary-color);
+.search-box input {
+    width: 100%;
+    padding: 10px 15px;
+    padding-right: 40px;
+    background-color: var(--bg-card);
+    border: 1px solid #374151;
+    border-radius: 8px;
     color: white;
-    padding: 0.25rem;
-    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.search-box i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+#specialty-filter {
+    width: 200px;
+    /* Fixed smaller width */
+    padding: 10px 15px;
+    background-color: var(--bg-card);
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: white;
     cursor: pointer;
-    overflow: hidden;
+    font-size: 0.9rem;
 }
 
-.timeline-shift .shift-content {
-    font-size: 0.8rem;
-    line-height: 1.2;
+/* Weekly & Daily View Styles */
+.calendar-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #374151;
+    min-height: 400px;
 }
 
-/* Estilos para fotos de médicos */
-.doctor-photo {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin: 0 auto 1rem auto;
-    border: 3px solid var(--secondary-color);
-    flex-shrink: 0;
-}
-
-.doctor-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Mejoras en los formularios */
-.form-group small {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.8rem;
-}
-
-/* Estilos para selects */
-select {
-    background-color: white;
-    border: 1px solid var(--border-color);
+.daily-view-container {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
     border-radius: var(--border-radius);
-    padding: 0.75rem;
+}
+
+.daily-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.daily-header h4 {
+    margin: 0;
+    color: var(--primary-color);
+    text-transform: capitalize;
+}
+
+.daily-shifts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.daily-shift-card {
+    background: var(--bg-card);
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.daily-shift-card:hover {
+    border-color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.shift-time {
+    font-family: monospace;
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+    min-width: 120px;
+}
+
+.shift-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.shift-info strong {
     font-size: 1rem;
-    width: 100%;
-    appearance: none; /* Remover apariencia nativa */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1rem;
-    padding-right: 2.5rem;
+    color: white;
 }
 
-select:focus {
-    outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+.shift-info span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
-/* Evitar zoom en iOS para inputs */
-@media screen and (max-width: 767px) {
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    input[type="password"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    select,
-    textarea {
-        font-size: 16px !important;
-        min-height: 44px;
-        padding: 0.75rem;
-    }
-
-    /* Mejorar botones táctiles */
-    .btn {
-        min-height: 44px;
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
-    }
-
-    /* Mejorar elementos clickeables */
-    .doctor-card,
-    .shift-item,
-    .preview-shift,
-    .calendar-day {
-        min-height: 44px;
-        cursor: pointer;
-    }
+.daily-shift-card i {
+    color: #4b5563;
 }
 
-/* Mejoras en los modales */
-.modal-content {
-    max-height: 90vh;
-    overflow-y: auto;
+/* Shift Pill & Color Coding */
+.shift-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 6px !important;
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #4b5563;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
-/* Estilos para inputs de fecha y hora */
-input[type="date"],
-input[type="time"] {
-    background-color: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 0.75rem;
-    font-size: 1rem;
-    width: 100%;
+.shift-type-tag {
+    font-weight: bold;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.2);
+    padding: 0 4px;
+    border-radius: 2px;
+    min-width: 18px;
+    text-align: center;
 }
 
-input[type="date"]:focus,
-input[type="time"]:focus {
-    outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+.shift-doctor-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Colores para tipos de turno */
-.shift-item.guardia { background: var(--warning-color); }
-.shift-item.consulta { background: var(--success-color); }
-.shift-item.emergencia { background: var(--danger-color); }
-.shift-item.descanso { background: #95a5a6; }
-
-.timeline-shift.guardia { background: var(--warning-color); }
-.timeline-shift.consulta { background: var(--success-color); }
-.timeline-shift.emergencia { background: var(--danger-color); }
-.timeline-shift.descanso { background: #95a5a6; }
-
-.preview-shift.guardia { background: var(--warning-color); }
-.preview-shift.consulta { background: var(--success-color); }
-.preview-shift.emergencia { background: var(--danger-color); }
-.preview-shift.descanso { background: #95a5a6; }
-
-/* Estados de carga */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
+.shift-pill.mañana,
+.daily-shift-card.mañana {
+    border-left-color: #f59e0b;
 }
 
-/* Mejoras de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
+.shift-pill.noche,
+.daily-shift-card.noche {
+    border-left-color: #8b5cf6;
 }
 
-/* Mejoras de impresión */
-@media print {
-    .header,
-    .user-menu,
-    .view-controls,
-    .btn,
-    .modal {
-        display: none !important;
-    }
+.shift-pill.especial,
+.daily-shift-card.especial,
+.shift-pill.guardia,
+.daily-shift-card.guardia {
+    border-left-color: #ef4444;
+}
 
-    .section {
-        display: block !important;
-    }
+.shift-pill.uci,
+.daily-shift-card.uci {
+    border-left-color: #ef4444;
+}
 
-    .doctor-card,
-    .calendar-container {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #000;
-    }
+.shift-pill.consulta,
+.daily-shift-card.consulta {
+    border-left-color: #10b981;
 }

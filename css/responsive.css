@@ -1,909 +1,124 @@
-/* Tablet */
+/* Responsive Design - Dark Premium */
+
 @media (max-width: 1024px) {
     .header-container {
-        padding: 0.75rem;
-        flex-wrap: wrap;
-        justify-content: space-between;
-    }
-
-    .nav-list {
-        gap: 1rem;
-    }
-
-    .about-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        padding: 0 15px;
     }
 
     .doctors-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
 
-    .calendar-month {
-        min-width: 700px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .calendar-week {
-        min-width: 700px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Mejorar botones táctiles */
-    .btn {
-        min-height: 44px;
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
-    }
-
-    /* Mejorar inputs para tablets */
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        font-size: 1rem;
-        padding: 0.875rem;
-        min-height: 44px;
-    }
-
-    /* Mejorar navegación */
-    .nav-link {
-        padding: 0.75rem 1rem;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-    }
-
-    /* Mejorar elementos clickeables */
-    .doctor-card,
-    .shift-item,
-    .preview-shift,
-    .calendar-day {
-        min-height: 44px;
-        cursor: pointer;
+    .dashboard-grid {
+        grid-template-columns: 1fr;
     }
 }
 
-/* Tablet Pequeña */
 @media (max-width: 768px) {
-    .header-container {
-        flex-wrap: wrap;
-        padding: 0.5rem;
-        gap: 1rem;
-        justify-content: space-between;
-        align-items: center;
+    :root {
+        --header-height: 60px;
     }
 
-    .logo {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .logo h1 {
-        font-size: 1.3rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    /* Mobile Nav */
+    .mobile-menu-btn {
+        display: block !important;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: white;
+        /* Adjusted for dark mode */
+        cursor: pointer;
+        z-index: 1001;
     }
 
     .nav {
-        order: 3;
-        width: 100%;
-        margin-top: 1rem;
-        display: none;
-        background: rgba(255,255,255,0.95);
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        height: 100vh;
+        background-color: var(--bg-card);
+        /* Dark background */
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+        padding: 80px 20px;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 999;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .nav.active {
-        display: block;
+        right: 0;
     }
 
     .nav-list {
         flex-direction: column;
-        gap: 0;
-        width: 100%;
-        padding: 0.5rem 0;
+        gap: 20px;
     }
 
     .nav-link {
         display: block;
-        padding: 1rem;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
         text-align: center;
-        width: 100%;
-        color: var(--primary-color);
-        transition: background-color 0.3s;
-    }
-
-    .nav-link:hover,
-    .nav-link.active {
-        background-color: rgba(52, 152, 219, 0.1);
-        color: var(--secondary-color);
-    }
-
-    .mobile-menu-btn {
-        display: block;
-        background: none;
-        border: 2px solid rgba(255,255,255,0.8);
+        font-size: 1.1rem;
         color: white;
-        padding: 0.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.3s;
     }
 
-    .mobile-menu-btn:hover {
-        background: rgba(255,255,255,0.1);
-        border-color: white;
+    .nav-link.active {
+        background: var(--primary-color);
+        color: white;
     }
 
     .user-menu {
-        flex-direction: row;
-        gap: 0.5rem;
-        margin-left: auto;
-        flex-shrink: 0;
+        display: none;
     }
 
-    .main {
-        margin: 1rem auto;
-        padding: 0 0.75rem;
+    /* Dashboard Layout */
+    .dashboard-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
-    .welcome-header {
-        margin-bottom: 2rem;
-    }
-
-    .about-uci,
-    .monthly-shifts-preview {
-        padding: 1.5rem;
-    }
-
-    .about-content {
+    .stats-container {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        /* Stack stats on mobile */
     }
 
-    .stat-card {
-        padding: 1rem;
-    }
-
-    .stat-card i {
-        font-size: 1.5rem;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-    }
-
-    .controls {
-        flex-direction: column;
-        width: 100%;
-        gap: 0.75rem;
-    }
-
-    .search-box {
-        min-width: 100%;
-    }
-
-    .search-box input {
-        width: 100%;
-    }
-
+    /* Grids */
     .doctors-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
 
-    .doctor-card {
-        padding: 1.25rem;
-        min-height: 350px;
-    }
-
-    .doctor-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-top: auto;
-    }
-
-    .doctor-actions .btn {
-        width: 100%;
-        justify-content: center;
-        min-height: 44px;
-        font-size: 0.9rem;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .calendar-container {
-        border-radius: 0;
-    }
-
-    .calendar-header {
-        padding: 0.75rem;
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-
-    .view-controls {
-        justify-content: center;
-    }
-
-    #calendar-view {
-        padding: 0.75rem;
-        min-height: 500px;
-    }
-
-    .calendar-month {
-        grid-template-columns: repeat(7, 1fr);
-        font-size: 0.7rem;
-        min-width: 600px;
-        overflow-x: auto;
+    .calendar-month-grid,
+    .calendar-grid-header {
+        font-size: 0.8rem;
     }
 
     .calendar-day {
         min-height: 80px;
-        padding: 0.25rem;
     }
 
-    .calendar-day-header {
-        padding: 0.75rem;
-        font-size: 0.7rem;
-    }
-
-    .shift-item {
-        font-size: 0.6rem;
-        padding: 0.1rem 0.25rem;
-    }
-
-    .calendar-week {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-        min-width: auto;
-    }
-
-    .calendar-day-detailed {
-        grid-template-columns: 1fr;
-        min-width: auto;
-    }
-
-    .time-slots {
-        display: none;
-    }
-
-    .shifts-timeline {
-        min-height: auto;
-    }
-
-    .timeline-shift {
-        position: static;
-        margin-bottom: 0.5rem;
-        height: auto !important;
-    }
-
-    .admin-dashboard {
-        padding: 1.5rem;
-    }
-
-    .admin-cards {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .admin-card {
-        padding: 1.5rem;
-    }
-
+    /* Modals */
     .modal-content {
         margin: 10% auto;
         width: 95%;
-        padding: 1.5rem;
+        padding: 20px;
     }
 
-    .form-actions {
-        flex-direction: column;
+    .welcome-header h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Utilities for touch */
+@media (hover: none) {
+    .doctor-card:hover {
+        transform: none;
     }
 
     .btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .preview-day {
-        min-height: 50px;
-    }
-
-    .preview-day-number {
-        font-size: 0.7rem;
-    }
-
-    .calendar-preview-grid {
-        min-width: 500px;
-    }
-
-    .add-doctor-card {
-        min-height: 350px;
-    }
-
-    .add-doctor-content {
-        padding: 1.5rem;
-    }
-
-    .add-doctor-content i {
-        font-size: 2rem;
-    }
-}
-
-/* Mobile Grande */
-@media (max-width: 480px) {
-    .header-container {
-        padding: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .logo {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .logo h1 {
-        font-size: 1.2rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .logo i {
-        font-size: 1.5rem;
-    }
-
-    .user-menu {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-end;
-        flex-shrink: 0;
-    }
-
-    .mobile-menu-btn {
-        order: 2;
-        margin-left: auto;
-    }
-
-    .welcome-header h2 {
-        font-size: 1.8rem;
-    }
-
-    .welcome-header p {
-        font-size: 1rem;
-    }
-
-    .about-uci,
-    .monthly-shifts-preview {
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .about-uci h3,
-    .monthly-shifts-preview h3 {
-        font-size: 1.5rem;
-    }
-
-    .stat-card {
-        padding: 0.75rem;
-    }
-
-    .stat-card span {
-        font-size: 1.5rem;
-    }
-
-    .section-header h2 {
-        font-size: 1.5rem;
-    }
-
-    .controls {
-        gap: 0.5rem;
-    }
-
-    .search-box input {
-        padding: 0.75rem 2.5rem 0.75rem 1rem;
-    }
-
-    .view-controls {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .view-btn {
-        flex: 1;
-        text-align: center;
-        justify-content: center;
-    }
-
-    .calendar-month {
-        min-width: 450px;
-        font-size: 0.6rem;
-        overflow-x: auto;
-    }
-
-    .calendar-day {
-        min-height: 60px;
-    }
-
-    .calendar-day-header {
-        padding: 0.5rem;
-        font-size: 0.6rem;
-    }
-
-    .day-number {
-        font-size: 0.7rem;
-    }
-
-    .shift-item {
-        display: none;
-    }
-
-    .shift-item:first-child {
-        display: block;
-    }
-
-    .more-shifts {
-        display: block;
-        font-size: 0.6rem;
-    }
-
-    .doctor-card {
-        padding: 1rem;
-        min-height: 320px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .doctor-photo {
-        width: 60px;
-        height: 60px;
-        align-self: center;
-    }
-
-    .doctor-contact {
-        justify-content: center;
-        font-size: 0.9rem;
-        text-align: center;
-    }
-
-    .doctor-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-top: auto;
-        width: 100%;
-    }
-
-    .doctor-actions .btn {
-        width: 100%;
-        justify-content: center;
-        min-height: 48px;
-        font-size: 1rem;
-        padding: 0.875rem 1rem;
-    }
-
-    .modal-content {
-        margin: 5% auto;
-        padding: 1rem;
-        width: 98%;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        padding: 0.75rem;
-        font-size: 1rem; /* Evitar zoom en iOS */
-        border: 2px solid var(--border-color);
-    }
-
-    /* Mejorar botones táctiles para móviles */
-    .btn {
-        min-height: 48px;
-        padding: 0.875rem 1.5rem;
-        font-size: 1rem;
-    }
-
-    /* Mejorar elementos clickeables */
-    .shift-item,
-    .preview-shift,
-    .doctor-card,
-    .calendar-day {
         min-height: 44px;
-        cursor: pointer;
-    }
-
-    /* Mejorar navegación táctil */
-    .nav-link {
-        padding: 1rem;
-        min-height: 48px;
-        display: flex;
-        align-items: center;
-    }
-
-    .preview-day {
-        min-height: 45px;
-    }
-
-    .preview-day-number {
-        font-size: 0.6rem;
-    }
-
-    .calendar-preview-grid {
-        min-width: 400px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .preview-day {
-        min-height: 45px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-    }
-
-    .preview-day-number {
-        font-size: 0.6rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .preview-shifts {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-    }
-
-    .preview-shift {
-        height: 3px;
-        border-radius: 1px;
-        flex-shrink: 0;
-    }
-
-    #notifications {
-        right: 0.5rem;
-        left: 0.5rem;
-        max-width: none;
-    }
-
-    .notification {
-        padding: 0.75rem 1rem;
-    }
-}
-
-/* Mobile Muy Pequeño */
-@media (max-width: 320px) {
-    .logo h1 {
-        font-size: 1rem;
-    }
-
-    .welcome-header h2 {
-        font-size: 1.5rem;
-    }
-
-    .calendar-month {
-        min-width: 300px;
-        overflow-x: auto;
-    }
-
-    .calendar-day {
-        min-height: 50px;
-        padding: 0.1rem;
-    }
-
-    .day-number {
-        font-size: 0.6rem;
-    }
-
-    .doctor-card {
-        padding: 0.75rem;
-        min-height: 280px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .doctor-photo {
-        width: 50px;
-        height: 50px;
-        align-self: center;
-    }
-
-    .doctor-contact {
-        justify-content: center;
-        font-size: 0.8rem;
-        text-align: center;
-    }
-
-    .doctor-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-top: auto;
-        width: 100%;
-    }
-
-    .doctor-actions .btn {
-        width: 100%;
-        justify-content: center;
-        min-height: 44px;
-        font-size: 0.9rem;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .calendar-preview-grid {
-        min-width: 280px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .preview-day {
-        min-height: 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-    }
-
-    .preview-day-number {
-        font-size: 0.6rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .preview-shifts {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-    }
-
-    .preview-shift {
-        height: 2px;
-        border-radius: 1px;
-        flex-shrink: 0;
-    }
-}
-
-/* Orientación landscape para móviles */
-@media (max-height: 500px) and (orientation: landscape) {
-    .header {
-        position: static;
-    }
-
-    .header-container {
-        padding: 0.25rem;
-    }
-
-    .logo h1 {
-        font-size: 1rem;
-    }
-
-    .main {
-        margin: 0.5rem auto;
-        padding: 0 0.5rem;
-    }
-
-    .modal-content {
-        margin: 1% auto;
-        max-height: 95vh;
-        overflow-y: auto;
-        padding: 1rem;
-    }
-
-    .calendar-day {
-        min-height: 50px;
-    }
-
-    .doctor-card {
-        padding: 1rem;
-        min-height: 300px;
-    }
-
-    .doctor-photo {
-        width: 50px;
-        height: 50px;
-    }
-
-    .doctor-actions .btn {
-        min-height: 40px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-    }
-
-    .add-doctor-card {
-        min-height: 300px;
-    }
-
-    .welcome-header {
-        margin-bottom: 1rem;
-    }
-
-    .welcome-header h2 {
-        font-size: 1.5rem;
-    }
-
-    .about-uci,
-    .monthly-shifts-preview {
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Pantallas de alta densidad */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .logo i {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    .doctor-photo img {
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: crisp-edges;
-    }
-
-    /* Mejorar definición en pantallas retina */
-    .btn,
-    .nav-link,
-    .doctor-card,
-    .calendar-day {
-        border: 1px solid transparent;
-        border-radius: 4px;
-    }
-}
-
-/* Modo oscuro automático */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-color: #ffffff;
-        --light-color: #2c3e50;
-        --border-color: #34495e;
-    }
-
-    body {
-        background-color: #1a1a1a;
-        color: var(--text-color);
-    }
-
-    .doctor-card,
-    .about-uci,
-    .monthly-shifts-preview,
-    .calendar-container,
-    .admin-dashboard,
-    .modal-content {
-        background-color: #2c3e50;
-        color: white;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea,
-    .search-box input {
-        background-color: #34495e;
-        color: white;
-        border-color: #4a5f7a;
-    }
-
-    .calendar-day.other-month {
-        background-color: #253341;
-    }
-
-    .preview-day.other-month {
-        background-color: #253341;
-    }
-
-    .add-doctor-card {
-        background: linear-gradient(135deg, #4a5f7a 0%, #2c3e50 100%);
-    }
-
-    .shift-legend {
-        background: #34495e;
-    }
-}
-
-/* Alto contraste */
-@media (prefers-contrast: high) {
-    :root {
-        --primary-color: #000000;
-        --secondary-color: #0000ff;
-        --border-color: #000000;
-        --shadow: 0 2px 10px rgba(0,0,0,0.8);
-    }
-
-    .doctor-card {
-        border: 2px solid var(--primary-color);
-    }
-
-    .shift-item {
-        border: 1px solid white;
-    }
-
-    .preview-shift {
-        border: 1px solid white;
-    }
-
-    .nav-link.active {
-        background-color: #000000;
-        color: #ffffff;
-    }
-}
-
-/* Impresión */
-@media print {
-    .header,
-    .user-menu,
-    .view-controls,
-    .btn,
-    .modal,
-    .mobile-menu-btn,
-    #notifications {
-        display: none !important;
-    }
-
-    .section {
-        display: block !important;
-        break-inside: avoid;
-    }
-
-    .doctor-card,
-    .calendar-container {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #000;
-    }
-
-    .main {
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        background: white;
-        color: black;
-        font-size: 12pt;
-    }
-
-    .doctors-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Mejoras de rendimiento para dispositivos lentos */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Soporte para navegadores antiguos */
-@supports not (display: grid) {
-    .doctors-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .doctor-card {
-        flex: 1 1 300px;
-    }
-
-    .calendar-month {
-        display: table;
-        width: 100%;
     }
 }
