@@ -41,12 +41,56 @@ class DataManager {
                 this.useFirebase = true;
                 this.db = window.firebaseDb;
                 console.log('🚀 DataManager: Running in ONLINE mode (Firebase)');
+                this.syncLocalToCloud(); // Auto-migrate local data
             } else {
                 console.warn('⚠️ DataManager: Firebase globals not found, falling back to OFFLINE mode (LocalStorage)');
             }
+            this.updateSyncStatusUI();
         } catch (error) {
             console.error('❌ DataManager Init Error:', error);
             this.useFirebase = false;
+            this.updateSyncStatusUI();
+        }
+    }
+
+    async syncLocalToCloud() {
+        if (!this.useFirebase || !this.db) return;
+
+        console.log('🔄 Checking for local data to sync...');
+        const collections = ['doctors', 'shifts'];
+
+        for (const colName of collections) {
+            const localData = this._getFromLocalStorage(colName);
+            if (localData.length > 0) {
+                console.log(`📤 Syncing ${localData.length} items from ${colName} to cloud...`);
+                for (const item of localData) {
+                    // Save to cloud using its existing ID to avoid duplicates if possible
+                    await this.save(colName, item, item.id);
+                }
+                // Optional: Clear local storage after sync? 
+                // Better to keep it as fallback but maybe mark it as synced.
+                // For now, just let it stay.
+            }
+        }
+    }
+
+    updateSyncStatusUI() {
+        const el = document.getElementById('sync-status');
+        if (!el) return;
+
+        const icon = el.querySelector('i');
+        const text = el.querySelector('.status-text');
+
+        if (this.useFirebase && this.db) {
+            el.classList.remove('offline');
+            el.classList.add('online');
+            if (text) text.textContent = 'En la Nube';
+            el.title = 'Sincronizado con Firebase Cloud';
+        } else {
+            el.classList.remove('online');
+            el.classList.add('offline');
+            if (text) text.textContent = 'Modo Local';
+            el.title = 'Guardando solo en este dispositivo (LocalStorage)';
         }
     }
 
@@ -88,8 +132,8 @@ class DataManager {
             try {
                 if (id) {
                     const docRef = doc(this.db, collectionName, id.toString());
-                    await updateDoc(docRef, payload);
-                    console.log(`✅ Update success (${collectionName}/${id})`);
+                    await setDoc(docRef, payload, { merge: true });
+                    console.log(`✅ Sync/Update success (${collectionName}/${id})`);
                     return id;
                 } else {
                     payload.createdAt = timestamp;
