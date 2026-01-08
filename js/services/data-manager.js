@@ -12,7 +12,8 @@ import {
     query,
     orderBy,
     where,
-    setDoc
+    setDoc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 /**
@@ -140,8 +141,23 @@ class DataManager {
     }
 
     async getById(collectionName, id) {
+        if (!id || id === 'undefined') return null;
+
+        if (this.useFirebase && this.db) {
+            try {
+                const docRef = doc(this.db, collectionName, id.toString());
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    return { id: docSnap.id, ...docSnap.data() };
+                }
+                return null;
+            } catch (error) {
+                console.error(`❌ Firestore getById error (${collectionName}):`, error);
+            }
+        }
+
         const items = await this.getAll(collectionName);
-        return items.find(item => item.id === id);
+        return items.find(item => item.id.toString() === id.toString());
     }
 
     async save(collectionName, data, id = null) {
