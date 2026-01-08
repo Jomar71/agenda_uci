@@ -32,7 +32,7 @@ export class PDFGenerator {
 
         // Content
         const tableData = filteredShifts.map(s => {
-            const doctor = doctors.find(d => d.id === s.doctorId);
+            const doctor = doctors.find(d => d.id.toString().trim() === s.doctorId.toString().trim());
             return [
                 s.date,
                 this.getDayName(s.date),
@@ -70,13 +70,13 @@ export class PDFGenerator {
         const doc = new jsPDF();
 
         const doctors = await this.dataManager.getAll('doctors');
-        const doctor = doctors.find(d => d.id === doctorId);
+        const doctor = doctors.find(d => d.id.toString().trim() === doctorId.toString().trim());
 
         if (!doctor) return;
 
         const shifts = await this.dataManager.getAll('shifts');
         const doctorShifts = shifts
-            .filter(s => s.doctorId === doctorId)
+            .filter(s => s.doctorId.toString().trim() === doctorId.toString().trim())
             .sort((a, b) => new Date(b.date) - new Date(a.date));
 
         this.addHeader(doc, `HISTORIAL DE TURNOS: ${doctor.name.toUpperCase()}`);
@@ -103,11 +103,11 @@ export class PDFGenerator {
     addHeader(doc, title) {
         doc.setFontSize(22);
         doc.setTextColor(44, 62, 80);
-        doc.text("UCI MEDICAL CENTER", 105, 20, null, null, "center");
+        doc.text("UCI MEDICAL CENTER", 105, 20, { align: "center" });
 
         doc.setFontSize(14);
         doc.setTextColor(100);
-        doc.text(title, 105, 30, null, null, "center");
+        doc.text(title, 105, 30, { align: "center" });
 
         doc.setLineWidth(0.5);
         doc.line(20, 32, 190, 32);
@@ -151,13 +151,13 @@ export class PDFGenerator {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
-        doc.text("UCI MEDICAL CENTER", pageWidth / 2, 25, null, null, "center");
+        doc.text("UCI MEDICAL CENTER", pageWidth / 2, 25, { align: "center" });
 
         // Title
         doc.setTextColor(30, 58, 138);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text(type.toUpperCase(), pageWidth / 2, 60, null, null, "center");
+        doc.text(type.toUpperCase(), pageWidth / 2, 60, { align: "center" });
 
         // Body Content
         doc.setTextColor(0, 0, 0);

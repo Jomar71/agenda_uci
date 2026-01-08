@@ -19,14 +19,24 @@ export class DoctorsManager {
             console.log('🔥 Doctors update received');
             this.loadDoctors();
         });
+
+        // RE-LOAD when Firebase connects (in case we started in local mode)
+        window.addEventListener('uci_firebase_online', async () => {
+            console.log('🔄 DoctorsManager: Firebase ONLINE, re-loading doctors...');
+            await this.loadDoctors();
+        });
     }
 
     async loadDoctors() {
-        this.doctors = await dataManager.getAll('doctors');
-        this.updateSpecialtyFilter();
-        this.renderDoctors();
-        this.updateStats();
-        console.log(`✅ Loaded ${this.doctors.length} doctors`);
+        try {
+            this.doctors = await dataManager.getAll('doctors');
+            this.updateSpecialtyFilter();
+            this.renderDoctors();
+            this.updateStats();
+            console.log(`✅ Loaded ${this.doctors.length} doctors`);
+        } catch (error) {
+            console.error('Error loadDoctors:', error);
+        }
     }
 
     getDoctors() {
@@ -35,39 +45,58 @@ export class DoctorsManager {
 
     getDoctorById(id) {
         if (!id) return null;
-        const targetId = id.toString();
-        return this.doctors.find(d => d.id.toString() === targetId);
+        const targetId = id.toString().trim();
+        return this.doctors.find(d => d.id.toString().trim() === targetId);
     }
 
     setupEventListeners() {
-        // Buttons
+        // Modal Buttons
         const saveDoctorBtn = document.getElementById('save-doctor-btn');
-        const cancelDoctorBtn = document.getElementById('cancel-doctor-btn');
-        if (saveDoctorBtn) saveDoctorBtn.addEventListener('click', () => this.saveDoctor());
-        if (cancelDoctorBtn) cancelDoctorBtn.addEventListener('click', () => this.closeDoctorModal());
+        if (saveDoctorBtn) {
+            // Standard approach without cloning unless absolutely necessary
+            // For now, let's just ensure we add it once using a flag or just replacement
+            saveDoctorBtn.onclick = () => this.saveDoctor();
+        }
 
-        // Photo Upload
-        const doctorPhotoInput = document.getElementById('doctor-photo');
-        if (doctorPhotoInput) doctorPhotoInput.addEventListener('change', (e) => this.handlePhotoUpload(e));
+        const cancelDoctorBtn = document.getElementById('cancel-doctor-btn');
+        if (cancelDoctorBtn) {
+            cancelDoctorBtn.onclick = () => this.closeDoctorModal();
+        }
 
         // Filters
         const searchInput = document.getElementById('doctor-search');
-        if (searchInput) searchInput.addEventListener('input', () => this.filterDoctors());
+        if (searchInput) searchInput.oninput = () => this.filterDoctors();
 
         const specialtyFilter = document.getElementById('specialty-filter');
-        if (specialtyFilter) specialtyFilter.addEventListener('change', () => this.filterDoctors());
+        if (specialtyFilter) specialtyFilter.onchange = () => this.filterDoctors();
 
-        // EVENT DELEGATION for Doctors Grid
+        // Photo Upload
+        const doctorPhotoInput = document.getElementById('doctor-photo');
+        if (doctorPhotoInput) {
+            doctorPhotoInput.onchange = (e) => this.handlePhotoUpload(e);
+        }
+
+        // EVENT DELEGATION for Doctors Grid (Persistent)
         const grid = document.getElementById('doctors-grid');
-        if (grid) {
+        if (grid && !grid.dataset.listenerAttached) {
             grid.addEventListener('click', (e) => {
                 const target = e.target;
+
+                // Handle Add Doctor (Special Card)
+                const addCard = target.closest('.add-doctor-card');
+                if (addCard) {
+                    console.log('Delegation: Add Doctor');
+                    this.openDoctorModal();
+                    return;
+                }
 
                 // Handle View Shifts
                 const viewBtn = target.closest('.view-shifts-btn');
                 if (viewBtn) {
                     const id = viewBtn.dataset.id;
+                    console.log('Delegation: View Shifts', id);
                     document.querySelector('[href="#turnos"]').click();
+                    // We might need to tell ShiftsManager to filter, but navigation is first
                     return;
                 }
 
@@ -75,6 +104,7 @@ export class DoctorsManager {
                 const editBtn = target.closest('.edit-doctor-btn');
                 if (editBtn && this.auth.isAdmin()) {
                     const id = editBtn.dataset.id;
+                    console.log('Delegation: Edit Doctor', id);
                     this.openDoctorModal(id);
                     return;
                 }
@@ -83,10 +113,12 @@ export class DoctorsManager {
                 const deleteBtn = target.closest('.delete-doctor-btn');
                 if (deleteBtn && this.auth.isAdmin()) {
                     const id = deleteBtn.dataset.id;
+                    console.log('Delegation: Delete Doctor', id);
                     this.deleteDoctor(id);
                     return;
                 }
             });
+            grid.dataset.listenerAttached = 'true';
         }
     }
 
@@ -204,13 +236,18 @@ export class DoctorsManager {
         }
 
         try {
-            await dataManager.save('doctors', doctorData, doctorData.id ? doctorData.id : null);
-            this.closeDoctorModal();
-            this.auth.showNotification('Médico guardado correctamente', 'success');
-            await this.loadDoctors();
+            const id = await dataManager.save('doctors', doctorData, doctorData.id ? doctorData.id : null);
+            if (id) {
+                this.closeDoctorModal();
+                this.auth.showNotification('Médico guardado correctamente', 'success');
+                // Real-time subscription will trigger reload, but we can do it manually for extra safety
+                await this.loadDoctors();
+            } else {
+                throw new Error('No se recibió ID del servidor');
+            }
         } catch (error) {
-            console.error(error);
-            this.auth.showNotification('Error al guardar', 'error');
+            console.error('Error in saveDoctor:', error);
+            this.auth.showNotification('Error al guardar: ' + (error.message || 'Error de conexión'), 'error');
         }
     }
 

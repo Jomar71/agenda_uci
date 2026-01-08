@@ -29,26 +29,44 @@ class DataManager {
 
         this.useFirebase = false;
         this.listeners = new Map();
-        // Wait for next tick to allow firebase-config to run
-        setTimeout(() => this.init(), 100);
+
+        // Use a more robust initialization
+        if (document.readyState === 'complete') {
+            this.init();
+        } else {
+            window.addEventListener('load', () => this.init());
+        }
 
         DataManager.instance = this;
     }
 
     async init() {
+        console.log('📡 DataManager: Initializing...');
         try {
-            // Check global variable set by firebase-config.js
-            if (window.firebaseDb) {
-                this.useFirebase = true;
-                this.db = window.firebaseDb;
-                console.log('🚀 DataManager: Running in ONLINE mode (Firebase)');
+            // Check for Firebase multiple times if needed (retry logic)
+            let retries = 0;
+            const checkFirebase = () => {
+                if (window.firebaseDb) {
+                    this.db = window.firebaseDb;
+                    this.useFirebase = true;
+                    console.log('🚀 DataManager: Firebase connected successfully');
+                    this.updateSyncStatusUI();
 
-                // Only sync if explicitly requested or if we detect this is a NEW setup
-                // this.syncLocalToCloud(); 
-            } else {
-                console.warn('⚠️ DataManager: Firebase globals not found, falling back to OFFLINE mode (LocalStorage)');
-            }
-            this.updateSyncStatusUI();
+                    // Notify other modules that we are online
+                    window.dispatchEvent(new CustomEvent('uci_firebase_online'));
+                    return true;
+                }
+                if (retries < 10) {
+                    retries++;
+                    setTimeout(checkFirebase, 200);
+                    return false;
+                }
+                console.warn('⚠️ DataManager: Firebase timeout, using LocalStorage');
+                this.updateSyncStatusUI();
+                return false;
+            };
+
+            checkFirebase();
         } catch (error) {
             console.error('❌ DataManager Init Error:', error);
             this.useFirebase = false;
@@ -130,7 +148,7 @@ class DataManager {
                 const querySnapshot = await getDocs(collection(this.db, collectionName));
                 return querySnapshot.docs.map(doc => ({
                     ...doc.data(),
-                    id: doc.id
+                    id: doc.id.toString().trim()
                 }));
             } catch (error) {
                 console.error(`❌ Firestore getAll error (${collectionName}):`, error);
@@ -182,8 +200,8 @@ class DataManager {
                 if (finalId) {
                     const docRef = doc(this.db, collectionName, finalId);
                     await setDoc(docRef, payload, { merge: true });
-                    console.log(`✅ Sync/Update success (${collectionName}/${id})`);
-                    return id;
+                    console.log(`✅ Update success (${collectionName}/${finalId})`);
+                    return finalId;
                 } else {
                     payload.createdAt = timestamp;
                     const docRef = await addDoc(collection(this.db, collectionName), payload);
@@ -192,7 +210,8 @@ class DataManager {
                 }
             } catch (error) {
                 console.error(`❌ Firestore save error (${collectionName}):`, error);
-                return this._saveToLocalStorage(collectionName, payload, id);
+                // Don't fall back to local on write error to avoid data loss/desync
+                throw error;
             }
         } else {
             if (!id) payload.createdAt = timestamp;
@@ -201,17 +220,20 @@ class DataManager {
     }
 
     async delete(collectionName, id) {
+        let success = false;
         if (this.useFirebase && this.db) {
             try {
-                await deleteDoc(doc(this.db, collectionName, id.toString()));
-                console.log(`🗑️ Delete success (${collectionName}/${id})`);
-                return true;
+                await deleteDoc(doc(this.db, collectionName, id.toString().trim()));
+                console.log(`🗑️ Firestore delete success (${collectionName}/${id})`);
+                success = true;
             } catch (error) {
                 console.error(`❌ Firestore delete error (${collectionName}):`, error);
-                return this._deleteFromLocalStorage(collectionName, id);
             }
         }
-        return this._deleteFromLocalStorage(collectionName, id);
+
+        // Always attempt to remove from LocalStorage as well to clear "ghost" data
+        const localSuccess = this._deleteFromLocalStorage(collectionName, id.toString().trim());
+        return success || localSuccess;
     }
 
     // ==========================================

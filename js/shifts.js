@@ -15,11 +15,20 @@ export class ShiftsManager {
         console.log('📅 ShiftsManager: Initializing...');
         await this.loadShifts();
         this.setupEventListeners();
-        this.renderCalendar();
+        this.renderCalendar(); // Initial render
 
-        dataManager.subscribe('shifts', () => {
+        // Subscribe to real-time updates
+        dataManager.subscribe('shifts', async (changes) => {
             console.log('🔥 Shifts update received');
-            this.loadShifts().then(() => this.renderCalendar());
+            await this.loadShifts();
+            this.renderCalendar();
+        });
+
+        // RE-LOAD when Firebase connects
+        window.addEventListener('uci_firebase_online', async () => {
+            console.log('🔄 ShiftsManager: Firebase ONLINE, re-loading shifts...');
+            await this.loadShifts();
+            this.renderCalendar();
         });
     }
 
