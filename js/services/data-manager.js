@@ -161,8 +161,10 @@ class DataManager {
     }
 
     async save(collectionName, data, id = null) {
-        // Force ID to string if provided
-        const finalId = id ? id.toString() : null;
+        // Force ID to string if provided and trim to avoid whitespace issues
+        let finalId = id ? id.toString().trim() : null;
+        if (finalId === 'undefined' || finalId === '') finalId = null;
+
         const items = await this.getAll(collectionName);
         const timestamp = new Date().toISOString();
 
@@ -219,7 +221,8 @@ class DataManager {
     subscribe(collectionName, callback) {
         if (this.useFirebase && this.db) {
             try {
-                const q = query(collection(this.db, collectionName), orderBy('updatedAt', 'desc'));
+                // Simplified query without orderBy to avoid index requirement for now
+                const q = query(collection(this.db, collectionName));
                 const unsubscribe = onSnapshot(q, (snapshot) => {
                     const changes = snapshot.docChanges().map(change => ({
                         type: change.type,
@@ -227,9 +230,13 @@ class DataManager {
                         data: change.doc.data()
                     }));
 
+                    // Only callback if there are actual changes
                     if (changes.length > 0) {
+                        console.log(`🔥 [${collectionName}] Real-time change detected:`, changes.length, 'items');
                         callback(changes);
                     }
+                }, (error) => {
+                    console.error(`❌ Firestore Snapshot error (${collectionName}):`, error);
                 });
 
                 this.listeners.set(collectionName, unsubscribe);

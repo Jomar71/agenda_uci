@@ -290,6 +290,27 @@ h2 {
     padding: 2rem;
     text-align: center;
     box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+}
+
+.doctor-info {
+    margin-bottom: 1.5rem;
+}
+
+.doctor-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: auto;
+    flex-wrap: wrap;
 }
 
 .doctor-photo-wrapper {
