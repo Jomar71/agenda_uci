@@ -112,8 +112,8 @@ class DataManager {
             try {
                 const querySnapshot = await getDocs(collection(this.db, collectionName));
                 return querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
+                    ...doc.data(),
+                    id: doc.id
                 }));
             } catch (error) {
                 console.error(`❌ Firestore getAll error (${collectionName}):`, error);
@@ -136,6 +136,10 @@ class DataManager {
             ...data,
             updatedAt: timestamp
         };
+
+        // Important: Remove 'id' from the payload before saving to Firestore
+        // to avoid overwriting the 'doc.id' field when loading back.
+        delete payload.id;
 
         if (this.useFirebase && this.db) {
             try {
