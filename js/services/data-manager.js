@@ -41,7 +41,9 @@ class DataManager {
                 this.useFirebase = true;
                 this.db = window.firebaseDb;
                 console.log('🚀 DataManager: Running in ONLINE mode (Firebase)');
-                this.syncLocalToCloud(); // Auto-migrate local data
+
+                // Only sync if explicitly requested or if we detect this is a NEW setup
+                // this.syncLocalToCloud(); 
             } else {
                 console.warn('⚠️ DataManager: Firebase globals not found, falling back to OFFLINE mode (LocalStorage)');
             }
@@ -56,30 +58,44 @@ class DataManager {
     async syncLocalToCloud() {
         if (!this.useFirebase || !this.db) return;
 
+        // Prevent multiple syncs
+        if (localStorage.getItem('uci_data_synced') === 'true') {
+            console.log('✅ Data already synced previously');
+            return;
+        }
+
         console.log('🔄 Checking for local data to sync...');
         const collections = ['doctors', 'shifts'];
+        let itemsSynced = 0;
 
         for (const colName of collections) {
             const localData = this._getFromLocalStorage(colName);
             if (localData.length > 0) {
                 console.log(`📤 Syncing ${localData.length} items from ${colName} to cloud...`);
                 for (const item of localData) {
-                    // Check if document already exists in cloud to avoid overwriting newer data
-                    if (item.id) {
+                    // Safety: Skip invalid items
+                    if (!item || (!item.id && !item.name)) continue;
+
+                    // Check for existing cloud data
+                    if (item.id && item.id !== 'undefined') {
                         try {
                             const cloudDoc = await this.getById(colName, item.id);
-                            if (cloudDoc) {
-                                console.log(`⏭️ Skipping sync for ${colName}/${item.id} (already in cloud)`);
-                                continue;
-                            }
-                        } catch (e) {
-                            // If check fails, we proceed with caution or just skip
-                        }
+                            if (cloudDoc) continue;
+                        } catch (e) { }
                     }
-                    // Save to cloud using its existing ID to avoid duplicates
-                    await this.save(colName, item, item.id);
+
+                    // Save to cloud
+                    await this.save(colName, item, item.id && item.id !== 'undefined' ? item.id : null);
+                    itemsSynced++;
                 }
+                // Clear local specifically to avoid re-syncing duplicates
+                // localStorage.removeItem(colName); 
             }
+        }
+
+        if (itemsSynced > 0) {
+            localStorage.setItem('uci_data_synced', 'true');
+            console.log(`✅ Sync completed: ${itemsSynced} items migrated to cloud`);
         }
     }
 

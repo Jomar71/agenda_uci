@@ -159,12 +159,14 @@ export class DoctorsManager {
     }
 
     openDoctorModal(id = null) {
+        console.log('📝 DoctorsManager: Opening modal for ID:', id);
         const modal = document.getElementById('doctor-modal');
         const title = document.getElementById('doctor-modal-title');
         this.currentPhoto = null;
 
-        if (id) {
+        if (id && id !== 'undefined') {
             const doctor = this.getDoctorById(id);
+            console.log('🔍 Found doctor:', doctor);
             if (doctor) {
                 title.textContent = 'Editar Médico';
                 this.fillForm(doctor);
