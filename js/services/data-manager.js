@@ -64,12 +64,21 @@ class DataManager {
             if (localData.length > 0) {
                 console.log(`📤 Syncing ${localData.length} items from ${colName} to cloud...`);
                 for (const item of localData) {
-                    // Save to cloud using its existing ID to avoid duplicates if possible
+                    // Check if document already exists in cloud to avoid overwriting newer data
+                    if (item.id) {
+                        try {
+                            const cloudDoc = await this.getById(colName, item.id);
+                            if (cloudDoc) {
+                                console.log(`⏭️ Skipping sync for ${colName}/${item.id} (already in cloud)`);
+                                continue;
+                            }
+                        } catch (e) {
+                            // If check fails, we proceed with caution or just skip
+                        }
+                    }
+                    // Save to cloud using its existing ID to avoid duplicates
                     await this.save(colName, item, item.id);
                 }
-                // Optional: Clear local storage after sync? 
-                // Better to keep it as fallback but maybe mark it as synced.
-                // For now, just let it stay.
             }
         }
     }

@@ -228,9 +228,9 @@ class DoctorsManager {
                     <i class="fas fa-user-md" style="font-size: 3rem; color: #bdc3c7; margin-bottom: 1rem;"></i>
                     <h3 style="color: #7f8c8d; margin-bottom: 1rem;">No hay médicos registrados</h3>
                     ${window.auth?.isAdmin() ?
-                        '<button class="btn btn-primary" onclick="window.doctorsManager.openDoctorModal()">Agregar Primer Médico</button>' :
-                        '<p style="color: #95a5a6;">Contacte al administrador para agregar médicos</p>'
-                    }
+                    '<button class="btn btn-primary" onclick="window.doctorsManager.openDoctorModal()">Agregar Primer Médico</button>' :
+                    '<p style="color: #95a5a6;">Contacte al administrador para agregar médicos</p>'
+                }
                 </div>
             `;
         } else {
@@ -327,7 +327,7 @@ class DoctorsManager {
     handleViewShifts(e) {
         e.preventDefault();
         e.stopPropagation();
-        const doctorId = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
+        const id = e.target.closest('.view-shifts-btn').dataset.id;
         console.log('👀 Ver turnos del médico:', doctorId);
         this.viewDoctorShifts(doctorId);
     }
@@ -646,7 +646,7 @@ class DoctorsManager {
         const doctor = this.doctors.find(d => d.id === doctorId);
         if (!doctor) {
             console.error('❌ Médico no encontrado para eliminar:', doctorId, 'tipo:', typeof id);
-            console.log('📋 Médicos disponibles:', this.doctors.map(d => ({id: d.id, name: d.name})));
+            console.log('📋 Médicos disponibles:', this.doctors.map(d => ({ id: d.id, name: d.name })));
             return;
         }
 
@@ -744,8 +744,8 @@ class DoctorsManager {
 
         const filtered = this.doctors.filter(doctor => {
             const matchesSearch = doctor.name.toLowerCase().includes(searchTerm) ||
-                                doctor.specialty.toLowerCase().includes(searchTerm) ||
-                                doctor.email.toLowerCase().includes(searchTerm);
+                doctor.specialty.toLowerCase().includes(searchTerm) ||
+                doctor.email.toLowerCase().includes(searchTerm);
             const matchesSpecialty = !specialty || doctor.specialty === specialty;
 
             return matchesSearch && matchesSpecialty;

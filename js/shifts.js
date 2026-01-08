@@ -182,7 +182,7 @@ export class ShiftsManager {
                 <div class="daily-shifts-list">
                     ${shifts.length === 0 ? '<p class="text-muted text-center p-4">No hay turnos para este día</p>' :
                 shifts.map(s => {
-                    const doctor = this.doctorsManager.getDoctorById(parseInt(s.doctorId));
+                    const doctor = this.doctorsManager.getDoctorById(s.doctorId);
                     return `
                         <div class="daily-shift-card ${s.type}" onclick="window.app.shifts.openShiftModal(${s.id})">
                             <div class="shift-time">${s.startTime} - ${s.endTime}</div>
@@ -200,7 +200,7 @@ export class ShiftsManager {
     }
 
     renderShiftPill(shift) {
-        const doctor = this.doctorsManager.getDoctorById(parseInt(shift.doctorId));
+        const doctor = this.doctorsManager.getDoctorById(shift.doctorId);
         const name = doctor ? doctor.name.split(' ')[0] : '???'; // Use first name
         const timeAbbr = shift.startTime === '07:00' ? 'D' : (shift.startTime === '19:00' ? 'N' : '');
 
@@ -222,7 +222,7 @@ export class ShiftsManager {
         document.querySelectorAll('.shift-pill').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.openShiftModal(parseInt(el.dataset.id));
+                this.openShiftModal(el.dataset.id);
             });
         });
     }
@@ -270,7 +270,7 @@ export class ShiftsManager {
     async saveShift() {
         const formData = {
             id: document.getElementById('shift-id').value,
-            doctorId: parseInt(document.getElementById('shift-doctor').value),
+            doctorId: document.getElementById('shift-doctor').value,
             date: document.getElementById('shift-date').value,
             type: document.getElementById('shift-type').value,
             startTime: document.getElementById('shift-start').value,
@@ -281,7 +281,7 @@ export class ShiftsManager {
         if (!formData.doctorId || !formData.date) return;
 
         try {
-            await dataManager.save('shifts', formData, formData.id ? parseInt(formData.id) : null);
+            await dataManager.save('shifts', formData, formData.id ? formData.id : null);
             this.closeShiftModal();
             this.auth.showNotification('Turno guardado', 'success');
             await this.loadShifts(); // Refresh
@@ -295,7 +295,7 @@ export class ShiftsManager {
     async deleteShift() {
         const id = document.getElementById('shift-id').value;
         if (id && confirm('¿Borrar turno?')) {
-            await dataManager.delete('shifts', parseInt(id));
+            await dataManager.delete('shifts', id);
             this.closeShiftModal();
             this.auth.showNotification('Turno eliminado', 'success');
             await this.loadShifts();

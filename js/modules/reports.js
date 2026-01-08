@@ -93,8 +93,8 @@ export class ReportsController {
             item.addEventListener('mouseenter', () => item.style.backgroundColor = 'rgba(255,255,255,0.05)');
             item.addEventListener('mouseleave', () => item.style.backgroundColor = 'transparent');
             item.addEventListener('click', () => {
-                const id = parseInt(item.dataset.id);
-                const doctor = doctors.find(d => parseInt(d.id) === id);
+                const id = item.dataset.id;
+                const doctor = doctors.find(d => d.id.toString() === id.toString());
 
                 if (type === 'report') {
                     this.generator.generateDoctorReport(id);

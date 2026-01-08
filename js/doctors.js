@@ -35,8 +35,8 @@ export class DoctorsManager {
 
     getDoctorById(id) {
         if (!id) return null;
-        const targetId = parseInt(id);
-        return this.doctors.find(d => parseInt(d.id) === targetId);
+        const targetId = id.toString();
+        return this.doctors.find(d => d.id.toString() === targetId);
     }
 
     setupEventListeners() {
@@ -133,7 +133,7 @@ export class DoctorsManager {
     attachCardEvents() {
         document.querySelectorAll('.view-shifts-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.closest('.view-shifts-btn').dataset.id);
+                const id = e.target.closest('.view-shifts-btn').dataset.id;
                 // navigate and filter logic
                 document.querySelector('[href="#turnos"]').click();
                 // We should probably trigger a filter event here or call a method on ShiftsManager if we had access
@@ -144,14 +144,14 @@ export class DoctorsManager {
         if (this.auth.isAdmin()) {
             document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.closest('.edit-doctor-btn').dataset.id);
+                    const id = e.target.closest('.edit-doctor-btn').dataset.id;
                     this.openDoctorModal(id);
                 });
             });
 
             document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.closest('.delete-doctor-btn').dataset.id);
+                    const id = e.target.closest('.delete-doctor-btn').dataset.id;
                     this.deleteDoctor(id);
                 });
             });
@@ -186,7 +186,7 @@ export class DoctorsManager {
 
         const doctorData = {
             ...formData,
-            photo: this.currentPhoto || (formData.id ? this.getDoctorById(parseInt(formData.id))?.photo : null)
+            photo: this.currentPhoto || (formData.id ? this.getDoctorById(formData.id)?.photo : null)
         };
 
         // Don't save password if empty in edit mode
@@ -195,7 +195,7 @@ export class DoctorsManager {
         }
 
         try {
-            await dataManager.save('doctors', doctorData, doctorData.id ? parseInt(doctorData.id) : null);
+            await dataManager.save('doctors', doctorData, doctorData.id ? doctorData.id : null);
             this.closeDoctorModal();
             this.auth.showNotification('Médico guardado correctamente', 'success');
             await this.loadDoctors();
