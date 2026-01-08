@@ -161,6 +161,8 @@ class DataManager {
     }
 
     async save(collectionName, data, id = null) {
+        // Force ID to string if provided
+        const finalId = id ? id.toString() : null;
         const items = await this.getAll(collectionName);
         const timestamp = new Date().toISOString();
 
@@ -175,8 +177,8 @@ class DataManager {
 
         if (this.useFirebase && this.db) {
             try {
-                if (id) {
-                    const docRef = doc(this.db, collectionName, id.toString());
+                if (finalId) {
+                    const docRef = doc(this.db, collectionName, finalId);
                     await setDoc(docRef, payload, { merge: true });
                     console.log(`✅ Sync/Update success (${collectionName}/${id})`);
                     return id;

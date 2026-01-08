@@ -57,7 +57,37 @@ export class DoctorsManager {
         const specialtyFilter = document.getElementById('specialty-filter');
         if (specialtyFilter) specialtyFilter.addEventListener('change', () => this.filterDoctors());
 
+        // EVENT DELEGATION for Doctors Grid
+        const grid = document.getElementById('doctors-grid');
+        if (grid) {
+            grid.addEventListener('click', (e) => {
+                const target = e.target;
 
+                // Handle View Shifts
+                const viewBtn = target.closest('.view-shifts-btn');
+                if (viewBtn) {
+                    const id = viewBtn.dataset.id;
+                    document.querySelector('[href="#turnos"]').click();
+                    return;
+                }
+
+                // Handle Edit (Admin only)
+                const editBtn = target.closest('.edit-doctor-btn');
+                if (editBtn && this.auth.isAdmin()) {
+                    const id = editBtn.dataset.id;
+                    this.openDoctorModal(id);
+                    return;
+                }
+
+                // Handle Delete (Admin only)
+                const deleteBtn = target.closest('.delete-doctor-btn');
+                if (deleteBtn && this.auth.isAdmin()) {
+                    const id = deleteBtn.dataset.id;
+                    this.deleteDoctor(id);
+                    return;
+                }
+            });
+        }
     }
 
     renderDoctors(doctorsToRender = null) {
@@ -96,7 +126,7 @@ export class DoctorsManager {
         }
 
         grid.innerHTML = html;
-        this.attachCardEvents();
+        // No need to call attachCardEvents here anymore if using delegation on parent
     }
 
     createDoctorCard(doctor) {
@@ -130,32 +160,9 @@ export class DoctorsManager {
         `;
     }
 
+    // Removing old attachCardEvents since we use delegation now
     attachCardEvents() {
-        document.querySelectorAll('.view-shifts-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.closest('.view-shifts-btn').dataset.id;
-                // navigate and filter logic
-                document.querySelector('[href="#turnos"]').click();
-                // We should probably trigger a filter event here or call a method on ShiftsManager if we had access
-                // For now just navigate
-            });
-        });
-
-        if (this.auth.isAdmin()) {
-            document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = e.target.closest('.edit-doctor-btn').dataset.id;
-                    this.openDoctorModal(id);
-                });
-            });
-
-            document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = e.target.closest('.delete-doctor-btn').dataset.id;
-                    this.deleteDoctor(id);
-                });
-            });
-        }
+        // Method kept for compatibility but empty
     }
 
     openDoctorModal(id = null) {
@@ -208,11 +215,24 @@ export class DoctorsManager {
     }
 
     async deleteDoctor(id) {
-        if (confirm('¿Eliminar médico? Se borrarán sus turnos asignados.')) {
-            await dataManager.delete('doctors', id);
-            // TODO: Delete shifts for this doctor
-            this.auth.showNotification('Médico eliminado', 'success');
-            await this.loadDoctors();
+        if (!id || id === 'undefined') {
+            console.error('❌ Cannot delete doctor: invalid ID');
+            return;
+        }
+
+        if (confirm('¿Eliminar médico?')) {
+            try {
+                const success = await dataManager.delete('doctors', id);
+                if (success) {
+                    this.auth.showNotification('Médico eliminado', 'success');
+                    await this.loadDoctors();
+                } else {
+                    this.auth.showNotification('Error al eliminar', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleteDoctor:', error);
+                this.auth.showNotification('Error al eliminar', 'error');
+            }
         }
     }
 
