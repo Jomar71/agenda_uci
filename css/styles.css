@@ -664,6 +664,58 @@ input:focus {
     border-left-width: 5px;
 }
 
+/* Diagnostic Banner */
+.diagnostic-banner {
+    background-color: var(--danger-color);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    animation: slideDown 0.3s ease-out;
+}
+
+.diagnostic-banner .btn-fix {
+    background: white;
+    color: var(--danger-color);
+    padding: 2px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: none;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Adjust header when banner is active */
+body.has-banner .header {
+    top: 40px;
+    /* Approximate height of banner */
+}
+
+body.has-banner .main {
+    margin-top: calc(var(--header-height) + 40px);
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav {

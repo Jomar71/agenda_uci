@@ -110,6 +110,45 @@
     .welcome-header h2 {
         font-size: 1.5rem;
     }
+
+    /* Stacking Form Rows */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: 100% !important;
+    }
+
+    /* Scaling Header for Small Screens */
+    .header-container {
+        padding: 0 10px;
+    }
+
+    .logo h1 {
+        font-size: 1.1rem;
+    }
+
+    /* Ensure modals are scrollable and fit well */
+    .modal-content {
+        max-height: 85vh;
+        margin: 5% auto;
+    }
+
+    /* Doctor Card Grid Adjustments */
+    .doctors-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+    }
+
+    .doctor-card {
+        padding: 1.5rem;
+    }
 }
 
 /* Utilities for touch */

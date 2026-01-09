@@ -11,8 +11,12 @@ export class DoctorsManager {
 
     async init() {
         console.log('👨‍⚕️ DoctorsManager: Initializing...');
-        await this.loadDoctors();
+
+        // 1. SETUP EVENT LISTENERS IMMEDIATELY (Don't wait for data)
         this.setupEventListeners();
+
+        // 2. Load data
+        await this.loadDoctors();
 
         // Subscribe to real-time updates
         dataManager.subscribe('doctors', (changes) => {
@@ -23,6 +27,12 @@ export class DoctorsManager {
         // RE-LOAD when Firebase connects (in case we started in local mode)
         window.addEventListener('uci_firebase_online', async () => {
             console.log('🔄 DoctorsManager: Firebase ONLINE, re-loading doctors...');
+            await this.loadDoctors();
+        });
+
+        // RE-LOAD when permissions fail (to show local data)
+        window.addEventListener('uci_firebase_permissions_error', async () => {
+            console.log('🔄 DoctorsManager: Permission error, showing local data...');
             await this.loadDoctors();
         });
     }
@@ -50,12 +60,12 @@ export class DoctorsManager {
     }
 
     setupEventListeners() {
-        // Modal Buttons
-        const saveDoctorBtn = document.getElementById('save-doctor-btn');
-        if (saveDoctorBtn) {
-            // Standard approach without cloning unless absolutely necessary
-            // For now, let's just ensure we add it once using a flag or just replacement
-            saveDoctorBtn.onclick = () => this.saveDoctor();
+        const doctorForm = document.getElementById('doctor-form');
+        if (doctorForm) {
+            doctorForm.onsubmit = (e) => {
+                e.preventDefault();
+                this.saveDoctor();
+            };
         }
 
         const cancelDoctorBtn = document.getElementById('cancel-doctor-btn');
@@ -83,12 +93,14 @@ export class DoctorsManager {
                 const target = e.target;
 
                 // Handle Add Doctor (Special Card)
-                const addCard = target.closest('.add-doctor-card');
-                if (addCard) {
+                const addCard = target.closest('.add-doctor-card, .btn-primary');
+                if (addCard && (addCard.classList.contains('add-doctor-card') || addCard.textContent.includes('Agregar'))) {
                     console.log('Delegation: Add Doctor');
                     this.openDoctorModal();
                     return;
                 }
+
+
 
                 // Handle View Shifts
                 const viewBtn = target.closest('.view-shifts-btn');
@@ -135,7 +147,7 @@ export class DoctorsManager {
                     <i class="fas fa-user-md"></i>
                     <h3>No hay médicos registrados</h3>
                     ${this.auth.isAdmin() ?
-                    '<button class="btn btn-primary" onclick="window.app.doctors.openDoctorModal()">Agregar Primer Médico</button>' :
+                    '<button class="btn btn-primary">Agregar Primer Médico</button>' :
                     '<p>Contacte al administrador</p>'}
                 </div>
             `;
@@ -146,7 +158,7 @@ export class DoctorsManager {
 
             if (this.auth.isAdmin()) {
                 html += `
-                    <div class="doctor-card add-doctor-card animate__animated animate__fadeIn" onclick="window.app.doctors.openDoctorModal()">
+                    <div class="doctor-card add-doctor-card animate__animated animate__fadeIn">
                         <div class="add-doctor-content">
                             <i class="fas fa-user-plus"></i>
                             <h3>Agregar Médico</h3>
@@ -209,10 +221,14 @@ export class DoctorsManager {
             if (doctor) {
                 title.textContent = 'Editar Médico';
                 this.fillForm(doctor);
+                // Password is NOT required when editing
+                document.getElementById('doctor-password').required = false;
             }
         } else {
             title.textContent = 'Nuevo Médico';
             this.clearForm();
+            // Password IS required when creating
+            document.getElementById('doctor-password').required = true;
         }
         modal.style.display = 'block';
     }
@@ -227,6 +243,7 @@ export class DoctorsManager {
 
         const doctorData = {
             ...formData,
+            id: (formData.id && formData.id !== 'undefined' && formData.id !== '') ? formData.id : null,
             photo: this.currentPhoto || (formData.id ? this.getDoctorById(formData.id)?.photo : null)
         };
 
@@ -252,23 +269,29 @@ export class DoctorsManager {
     }
 
     async deleteDoctor(id) {
-        if (!id || id === 'undefined') {
-            console.error('❌ Cannot delete doctor: invalid ID');
+        // More robust ID validation
+        const finalId = id ? id.toString().trim() : '';
+        if (finalId === '' || finalId === 'undefined') {
+            console.error('❌ Cannot delete doctor: invalid ID', id);
+            this.auth.showNotification('Error: ID de médico inválido', 'error');
             return;
         }
 
         if (confirm('¿Eliminar médico?')) {
             try {
-                const success = await dataManager.delete('doctors', id);
+                console.log('🗑️ DoctorsManager: Attempting to delete doctor with ID:', finalId);
+                const success = await dataManager.delete('doctors', finalId);
                 if (success) {
                     this.auth.showNotification('Médico eliminado', 'success');
                     await this.loadDoctors();
                 } else {
-                    this.auth.showNotification('Error al eliminar', 'error');
+                    this.auth.showNotification('Error al eliminar del servidor', 'error');
+                    // Even if server fails, we might want to refresh to see if local was cleaned
+                    await this.loadDoctors();
                 }
             } catch (error) {
                 console.error('Error deleteDoctor:', error);
-                this.auth.showNotification('Error al eliminar', 'error');
+                this.auth.showNotification('Error al eliminar médico', 'error');
             }
         }
     }
@@ -326,10 +349,43 @@ export class DoctorsManager {
     handlePhotoUpload(e) {
         const file = e.target.files[0];
         if (file) {
+            const statusText = document.getElementById('photo-status-text');
+            if (statusText) statusText.textContent = 'Procesando imagen...';
+
             const reader = new FileReader();
             reader.onload = (evt) => {
-                this.currentPhoto = evt.target.result;
-                this.updatePhotoPreview(this.currentPhoto);
+                const img = new Image();
+                img.onload = () => {
+                    // Maximum dimensions for doctor photos
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress as JPEG for smaller size
+                    this.currentPhoto = canvas.toDataURL('image/jpeg', 0.7);
+                    this.updatePhotoPreview(this.currentPhoto);
+                    if (statusText) statusText.textContent = 'Foto lista';
+                };
+                img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
         }

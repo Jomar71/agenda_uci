@@ -29,6 +29,7 @@ class DataManager {
 
         this.useFirebase = false;
         this.listeners = new Map();
+        this.hasPermissionsError = false; // Persistent state for UI checks
 
         // Use a more robust initialization
         if (document.readyState === 'complete') {
@@ -152,10 +153,36 @@ class DataManager {
                 }));
             } catch (error) {
                 console.error(`❌ Firestore getAll error (${collectionName}):`, error);
+
+                // Si es un error de permisos, notificar a la app
+                if (error.code === 'permission-denied') {
+                    console.warn('⚠️ Error de permisos detectado. Usando modo de emergencia (Local).');
+                    this.useFirebase = false;
+                    this.hasPermissionsError = true;
+                    this.updateSyncStatusUI();
+                    window.dispatchEvent(new CustomEvent('uci_firebase_permissions_error', {
+                        detail: { collection: collectionName }
+                    }));
+                }
+
                 return this._getFromLocalStorage(collectionName);
             }
         }
-        return this._getFromLocalStorage(collectionName);
+
+        // When in local mode or fallback, proactively clean up records with no/invalid IDs
+        const localData = this._getFromLocalStorage(collectionName);
+        const validData = localData.filter(item => {
+            const itemId = (item.id || '').toString().trim();
+            return itemId !== '' && itemId !== 'undefined' && itemId !== 'null';
+        });
+
+        if (validData.length !== localData.length) {
+            console.log(`🧹 DataManager: Purged ${localData.length - validData.length} invalid records from ${collectionName}`);
+            localStorage.setItem(collectionName, JSON.stringify(validData));
+            window.dispatchEvent(new Event('storage'));
+        }
+
+        return validData;
     }
 
     async getById(collectionName, id) {
@@ -200,16 +227,23 @@ class DataManager {
                 if (finalId) {
                     const docRef = doc(this.db, collectionName, finalId);
                     await setDoc(docRef, payload, { merge: true });
-                    console.log(`✅ Update success (${collectionName}/${finalId})`);
+                    console.log(`✅ DataManager: Update success (${collectionName}/${finalId})`);
                     return finalId;
                 } else {
                     payload.createdAt = timestamp;
                     const docRef = await addDoc(collection(this.db, collectionName), payload);
-                    console.log(`✅ Create success (${collectionName}/${docRef.id})`);
+                    console.log(`✅ DataManager: Create success (${collectionName}/${docRef.id})`);
                     return docRef.id;
                 }
             } catch (error) {
                 console.error(`❌ Firestore save error (${collectionName}):`, error);
+
+                if (error.code === 'permission-denied') {
+                    window.dispatchEvent(new CustomEvent('uci_firebase_permissions_error', {
+                        detail: { collection: collectionName, action: 'save' }
+                    }));
+                }
+
                 // Don't fall back to local on write error to avoid data loss/desync
                 throw error;
             }
@@ -221,18 +255,22 @@ class DataManager {
 
     async delete(collectionName, id) {
         let success = false;
+        const finalId = id.toString().trim();
+        console.log(`🗑️ DataManager: Attempting to delete from ${collectionName} ID: ${finalId}`);
+
         if (this.useFirebase && this.db) {
             try {
-                await deleteDoc(doc(this.db, collectionName, id.toString().trim()));
-                console.log(`🗑️ Firestore delete success (${collectionName}/${id})`);
+                await deleteDoc(doc(this.db, collectionName, finalId));
+                console.log(`🗑️ DataManager: Firestore delete success (${collectionName}/${finalId})`);
                 success = true;
             } catch (error) {
-                console.error(`❌ Firestore delete error (${collectionName}):`, error);
+                console.error(`❌ DataManager: Firestore delete error (${collectionName}):`, error);
             }
         }
 
         // Always attempt to remove from LocalStorage as well to clear "ghost" data
-        const localSuccess = this._deleteFromLocalStorage(collectionName, id.toString().trim());
+        const localSuccess = this._deleteFromLocalStorage(collectionName, finalId);
+        console.log(`🗑️ DataManager: LocalStorage delete ${localSuccess ? 'success' : 'failed'} for ${finalId}`);
         return success || localSuccess;
     }
 
@@ -295,11 +333,12 @@ class DataManager {
             let newId = id;
 
             if (id) {
-                const index = items.findIndex(item => item.id === id);
+                const finalId = id.toString().trim();
+                const index = items.findIndex(item => item.id && item.id.toString().trim() === finalId);
                 if (index !== -1) {
-                    items[index] = { ...items[index], ...data };
+                    items[index] = { ...items[index], ...data, id: finalId };
                 } else {
-                    items.push({ ...data, id });
+                    items.push({ ...data, id: finalId });
                 }
             } else {
                 newId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
@@ -317,8 +356,13 @@ class DataManager {
 
     _deleteFromLocalStorage(collectionName, id) {
         try {
+            const finalId = id.toString().trim();
             const items = this._getFromLocalStorage(collectionName);
-            const newItems = items.filter(item => item.id !== id);
+            // Purge the item AND any items with empty IDs that might be stuck
+            const newItems = items.filter(item => {
+                const itemId = (item.id || '').toString().trim();
+                return itemId !== finalId && itemId !== '' && itemId !== 'undefined';
+            });
             localStorage.setItem(collectionName, JSON.stringify(newItems));
             window.dispatchEvent(new Event('storage'));
             return true;

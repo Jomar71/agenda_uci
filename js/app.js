@@ -28,6 +28,36 @@ class App {
 
         // Global access for debugging/interop (optional)
         window.app = this;
+
+        // Listener for permission errors (Live Site Diagnostic)
+        window.addEventListener('uci_firebase_permissions_error', (e) => {
+            console.error('🔓 Error de permisos en Firebase:', e.detail);
+            const banner = document.getElementById('diagnostic-banner');
+            if (banner) {
+                banner.innerHTML = `
+                    <span>⚠️ Base de datos bloqueada (Cloud). Trabajando en modo local.</span>
+                    <button class="btn-fix" onclick="window.app.showFixInstructions()">¿Cómo solucionar?</button>
+                `;
+                banner.style.display = 'flex';
+                document.body.classList.add('has-banner');
+            }
+        });
+
+        // Check if error already happened before listener was attached
+        if (this.doctors.dataManager && this.doctors.dataManager.hasPermissionsError) {
+            window.dispatchEvent(new CustomEvent('uci_firebase_permissions_error', {
+                detail: { source: 'init_check' }
+            }));
+        }
+    }
+
+    showFixInstructions() {
+        this.auth.showNotification(
+            'Para desbloquear la nube, debes actualizar las reglas de Firestore en tu consola de Firebase.',
+            'info'
+        );
+        // We could also open the modal with instructions or redirect
+        window.open('https://console.firebase.google.com/', '_blank');
     }
 
     setupNavigation() {
