@@ -1,3 +1,9 @@
+/**
+ * AuthManager - Gestión de sesión y autenticación.
+ * Credenciales de administrador + médicos registrados (contraseñas con hash).
+ */
+
+import { verifyPassword, escapeHtml } from './utils.js';
 
 export class AuthManager {
     constructor() {
@@ -13,72 +19,144 @@ export class AuthManager {
     }
 
     checkExistingSession() {
-        const saved = localStorage.getItem('currentUser');
-        if (saved) {
-            this.currentUser = JSON.parse(saved);
-            this.isLoggedIn = true;
-            this.userRole = this.currentUser.role;
-            this.updateUI();
+        try {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
+                const user = JSON.parse(saved);
+                if (user && user.username) {
+                    this.currentUser = user;
+                    this.isLoggedIn = true;
+                    this.userRole = user.role;
+                }
+            }
+        } catch (e) {
+            localStorage.removeItem('currentUser');
         }
+        this.updateUI();
     }
 
     setupEventListeners() {
-        const loginBtn = document.getElementById('login-btn');
-        if (loginBtn) loginBtn.addEventListener('click', () => this.openLoginModal());
-
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) logoutBtn.addEventListener('click', () => this.logout());
+        document.addEventListener('click', (e) => {
+            const loginBtn = e.target.closest('#login-btn');
+            if (loginBtn) {
+                this.openLoginModal();
+                return;
+            }
+            const logoutBtn = e.target.closest('#logout-btn');
+            if (logoutBtn) {
+                this.logout();
+                return;
+            }
+        });
 
         const loginForm = document.getElementById('login-form');
         if (loginForm) loginForm.addEventListener('submit', (e) => this.handleLogin(e));
 
-        // Global Modal Close
-        document.querySelectorAll('.close').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const modal = btn.closest('.modal');
-                if (modal) modal.style.display = 'none';
+        // Cierre global de modales
+        document.querySelectorAll('.modal').forEach(modal => {
+            const closeBtn = modal.querySelector('.modal-close');
+            if (closeBtn) closeBtn.addEventListener('click', () => this.closeModal(modal));
+
+            // Cerrar al hacer clic fuera del contenido
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) this.closeModal(modal);
             });
+        });
+
+        // Cerrar modal con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.open').forEach(m => this.closeModal(m));
+            }
+        });
+
+        // Botón de apertura desde el menú móvil (delegado en nav-user)
+        document.getElementById('mobile-user-menu')?.addEventListener('click', (e) => {
+            if (e.target.closest('#mobile-login-btn')) this.openLoginModal();
+            if (e.target.closest('#mobile-logout-btn')) this.logout();
         });
     }
 
     openLoginModal() {
-        document.getElementById('login-modal').style.display = 'block';
+        const modal = document.getElementById('login-modal');
+        if (!modal) return;
+        this.openModal(modal);
+        setTimeout(() => document.getElementById('login-username')?.focus(), 150);
     }
 
     closeLoginModal() {
-        document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('login-form').reset();
+        this.closeModal(document.getElementById('login-modal'));
+        document.getElementById('login-form')?.reset();
+    }
+
+    /** Abre un modal genérico. */
+    openModal(modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /** Cierra un modal genérico. */
+    closeModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('open');
+        const anyOpen = document.querySelectorAll('.modal.open').length;
+        if (anyOpen === 0) document.body.style.overflow = '';
     }
 
     async handleLogin(e) {
         e.preventDefault();
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value;
 
-        if (user === 'admin' && pass === 'admin123') {
-            this.loginSuccess({
-                id: 1,
-                name: 'Administrador',
-                username: 'admin',
-                role: 'admin'
-            });
+        const userInput = document.getElementById('login-username').value.trim();
+        const passInput = document.getElementById('login-password').value;
+        const submitBtn = document.getElementById('login-submit-btn');
+
+        if (!userInput || !passInput) {
+            this.showNotification('Ingresa usuario y contraseña', 'warning');
             return;
         }
 
-        // Check doctors
-        // Note: In a real app we would check against DB, but the original code 
-        // checked against loaded doctors in memory. 
-        // We will assume window.app.doctors is available or use a callback
-        const doctors = window.app?.doctors?.getDoctors() || [];
-        const doctor = doctors.find(d => d.username === user && d.password === pass); // Simplified auth
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+        }
 
-        if (doctor) {
-            this.loginSuccess({
-                ...doctor,
-                role: 'doctor'
-            });
-        } else {
-            this.showNotification('Credenciales incorrectas', 'error');
+        try {
+            // Administrador (credenciales locales de demo)
+            if (userInput === 'admin') {
+                if (passInput === 'admin123') {
+                    this.loginSuccess({
+                        id: 'admin',
+                        name: 'Administrador',
+                        username: 'admin',
+                        role: 'admin'
+                    });
+                    return;
+                }
+                this.showNotification('Credenciales incorrectas', 'error');
+                return;
+            }
+
+            // Médicos registrados en el sistema
+            const doctors = window.app?.doctors?.getDoctors() || [];
+            const doctor = doctors.find(d => String(d.username).toLowerCase() === userInput.toLowerCase());
+
+            if (doctor && await verifyPassword(doctor, passInput)) {
+                this.loginSuccess({
+                    id: doctor.id,
+                    name: doctor.name,
+                    username: doctor.username,
+                    role: 'doctor',
+                    specialty: doctor.specialty,
+                    photo: doctor.photo
+                });
+            } else {
+                this.showNotification('Credenciales incorrectas', 'error');
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Ingresar';
+            }
         }
     }
 
@@ -86,12 +164,15 @@ export class AuthManager {
         this.currentUser = user;
         this.isLoggedIn = true;
         this.userRole = user.role;
-        localStorage.setItem('currentUser', JSON.stringify(user));
+
+        const safeUser = { ...user };
+        delete safeUser.password;
+        localStorage.setItem('currentUser', JSON.stringify(safeUser));
+
         this.updateUI();
         this.closeLoginModal();
-        this.showNotification(`Bienvenido ${user.name}`, 'success');
+        this.showNotification(`Bienvenido, ${user.name}`, 'success');
 
-        // Refresh app state
         if (window.app) window.app.refresh();
     }
 
@@ -105,38 +186,82 @@ export class AuthManager {
         window.location.reload();
     }
 
+    /** Renderiza el estado de sesión en ambos menús (escritorio y móvil). */
     updateUI() {
-        const loginBtn = document.getElementById('login-btn');
-        const userInfo = document.getElementById('user-info');
-        const userName = document.getElementById('user-name');
-        const adminNav = document.getElementById('admin-nav');
+        const desktopMenu = document.getElementById('desktop-user-menu');
+        const mobileMenu = document.getElementById('mobile-user-menu');
+
+        // Clases de rol en <body> para el control de visibilidad por CSS
+        document.body.classList.toggle('is-logged', this.isLoggedIn);
+        document.body.classList.toggle('is-admin', this.isAdmin());
+        document.body.classList.toggle('is-medic', this.isLoggedIn && !this.isAdmin());
 
         if (this.isLoggedIn) {
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (userInfo) userInfo.style.display = 'flex';
-            if (userName) userName.textContent = this.currentUser.name;
-            if (adminNav) adminNav.style.display = this.isAdmin() ? 'block' : 'none';
+            const initials = (this.currentUser.name || 'U').trim().split(/\s+/).slice(0, 2)
+                .map(w => w.charAt(0).toUpperCase()).join('');
+            const roleLabel = this.isAdmin() ? 'Admin' : 'Médico';
 
-            // Show admin elements
-            if (this.isAdmin()) document.body.classList.add('is-admin');
+            if (desktopMenu) {
+                desktopMenu.innerHTML = `
+                    <div class="user-chip">
+                        <div class="user-avatar">${escapeHtml(initials)}</div>
+                        <div class="user-info-inner">
+                            <span class="user-name">${escapeHtml(this.currentUser.name)}</span>
+                            <span class="user-role">${roleLabel}</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" id="logout-btn" title="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                            <span>Salir</span>
+                        </button>
+                    </div>`;
+            }
+
+            if (mobileMenu) {
+                mobileMenu.innerHTML = `
+                    <div class="user-chip">
+                        <div class="user-avatar">${escapeHtml(initials)}</div>
+                        <div class="user-info-inner">
+                            <span class="user-name">${escapeHtml(this.currentUser.name)}</span>
+                            <span class="user-role">${roleLabel}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" id="mobile-logout-btn">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar Sesión
+                    </button>`;
+            }
         } else {
-            if (loginBtn) loginBtn.style.display = 'block';
-            if (userInfo) userInfo.style.display = 'none';
-            if (adminNav) adminNav.style.display = 'none';
-            document.body.classList.remove('is-admin');
+            const loginBtnHtml = `
+                <button class="btn btn-primary" id="login-btn">
+                    <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar Sesión
+                </button>`;
+
+            if (desktopMenu) desktopMenu.innerHTML = loginBtnHtml;
+            if (mobileMenu) mobileMenu.innerHTML = loginBtnHtml.replace('id="login-btn"', 'id="mobile-login-btn"');
         }
+
+        // Botón "Nuevo Turno": solo el administrador puede crear turnos
+        const addShiftBtn = document.getElementById('add-shift-btn');
+        if (addShiftBtn) addShiftBtn.style.display = this.isAdmin() ? 'inline-flex' : 'none';
+
+        // Notificar al resto de la app que cambió la sesión (ej: botones de documentos)
+        window.dispatchEvent(new CustomEvent('uci_auth_changed'));
     }
 
     showNotification(msg, type = 'info') {
         const container = document.getElementById('notifications');
+        if (!container) return;
+
+        const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
         const div = document.createElement('div');
-        div.className = `notification ${type} animate__animated animate__slideInRight`;
-        div.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
+        div.className = `notification ${type}`;
+        div.innerHTML = `<i class="fas ${icons[type] || icons.info}" aria-hidden="true"></i><span>${escapeHtml(msg)}</span>`;
+
         container.appendChild(div);
+
         setTimeout(() => {
-            div.classList.replace('animate__slideInRight', 'animate__slideOutRight');
-            setTimeout(() => div.remove(), 500);
-        }, 3000);
+            div.classList.add('out');
+            setTimeout(() => div.remove(), 400);
+        }, 3500);
     }
 
     isAdmin() {

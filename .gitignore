@@ -7,6 +7,8 @@ package-lock.json
 yarn.lock
 
 # ==================== FIREBASE ====================
+# Credenciales locales (nunca subir a git)
+js/firebase-config.js
 js/config.js
 .firebase/
 firebase-debug.log

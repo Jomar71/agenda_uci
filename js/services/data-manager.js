@@ -1,26 +1,23 @@
+/**
+ * DataManager - Capa de acceso a datos unificada.
+ * Gestiona Firebase Firestore con fallback automático a localStorage.
+ * Patrón Singleton.
+ */
 
-// Remove import { db } since we can't rely on it being exported
-// We will use window.firebaseDb which is set by firebase-config.js
 import {
     collection,
     addDoc,
-    updateDoc,
     deleteDoc,
     doc,
     getDocs,
+    getDoc,
     onSnapshot,
     query,
-    orderBy,
-    where,
-    setDoc,
-    getDoc
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-/**
- * DataManager - Unified Data Access Layer
- * Handles Firebase connection with automatic LocalStorage fallback
- * Implements Singleton pattern
- */
+import { hashPassword, formatDateLocal, generateId } from "../utils.js";
+
 class DataManager {
     constructor() {
         if (DataManager.instance) {
@@ -28,14 +25,17 @@ class DataManager {
         }
 
         this.useFirebase = false;
+        this.db = null;
         this.listeners = new Map();
-        this.hasPermissionsError = false; // Persistent state for UI checks
+        this.pendingSubscriptions = new Map();
+        this.hasPermissionsError = false;
+        this._ready = false;
+        this._seeded = false;
 
-        // Use a more robust initialization
-        if (document.readyState === 'complete') {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
             this.init();
         } else {
-            window.addEventListener('load', () => this.init());
+            window.addEventListener('DOMContentLoaded', () => this.init());
         }
 
         DataManager.instance = this;
@@ -44,25 +44,29 @@ class DataManager {
     async init() {
         console.log('📡 DataManager: Initializing...');
         try {
-            // Check for Firebase multiple times if needed (retry logic)
+            // Esperar a que firebase-config.js esté disponible (import ordenado)
             let retries = 0;
             const checkFirebase = () => {
                 if (window.firebaseDb) {
                     this.db = window.firebaseDb;
                     this.useFirebase = true;
-                    console.log('🚀 DataManager: Firebase connected successfully');
+                    this._ready = true;
+                    console.log('🚀 DataManager: Firebase conectado');
+                    this._attachPendingSubscriptions();
                     this.updateSyncStatusUI();
 
-                    // Notify other modules that we are online
+                    // Notificar a los módulos que estamos en línea
                     window.dispatchEvent(new CustomEvent('uci_firebase_online'));
                     return true;
                 }
-                if (retries < 10) {
+                if (retries < 15) {
                     retries++;
                     setTimeout(checkFirebase, 200);
                     return false;
                 }
-                console.warn('⚠️ DataManager: Firebase timeout, using LocalStorage');
+                console.warn('⚠️ DataManager: Firebase no disponible, usando LocalStorage');
+                this._ready = true;
+                this._seedIfNeeded();
                 this.updateSyncStatusUI();
                 return false;
             };
@@ -71,51 +75,96 @@ class DataManager {
         } catch (error) {
             console.error('❌ DataManager Init Error:', error);
             this.useFirebase = false;
+            this._ready = true;
+            this._seedIfNeeded();
             this.updateSyncStatusUI();
         }
     }
 
+    // ==========================================
+    // Sincronización local -> nube
+    // ==========================================
+
     async syncLocalToCloud() {
         if (!this.useFirebase || !this.db) return;
+        if (localStorage.getItem('uci_data_synced') === 'true') return;
 
-        // Prevent multiple syncs
-        if (localStorage.getItem('uci_data_synced') === 'true') {
-            console.log('✅ Data already synced previously');
-            return;
-        }
-
-        console.log('🔄 Checking for local data to sync...');
-        const collections = ['doctors', 'shifts'];
+        console.log('🔄 Buscando datos locales para sincronizar...');
         let itemsSynced = 0;
 
-        for (const colName of collections) {
+        for (const colName of ['doctors', 'shifts']) {
             const localData = this._getFromLocalStorage(colName);
-            if (localData.length > 0) {
-                console.log(`📤 Syncing ${localData.length} items from ${colName} to cloud...`);
-                for (const item of localData) {
-                    // Safety: Skip invalid items
-                    if (!item || (!item.id && !item.name)) continue;
-
-                    // Check for existing cloud data
-                    if (item.id && item.id !== 'undefined') {
-                        try {
-                            const cloudDoc = await this.getById(colName, item.id);
-                            if (cloudDoc) continue;
-                        } catch (e) { }
-                    }
-
-                    // Save to cloud
-                    await this.save(colName, item, item.id && item.id !== 'undefined' ? item.id : null);
-                    itemsSynced++;
-                }
-                // Clear local specifically to avoid re-syncing duplicates
-                // localStorage.removeItem(colName); 
+            for (const item of localData) {
+                if (!item || !item.id) continue;
+                try {
+                    const cloudDoc = await this.getById(colName, item.id);
+                    if (cloudDoc) continue;
+                } catch (e) { /* ignora y continúa */ }
+                await this.save(colName, item, item.id);
+                itemsSynced++;
             }
         }
 
         if (itemsSynced > 0) {
             localStorage.setItem('uci_data_synced', 'true');
-            console.log(`✅ Sync completed: ${itemsSynced} items migrated to cloud`);
+            console.log(`✅ Sincronización completada: ${itemsSynced} elementos migrados a la nube`);
+        }
+    }
+
+    /** Crea datos de ejemplo SOLO en modo local y si la colección está vacía. */
+    async _seedIfNeeded() {
+        if (this._seeded) return;
+        this._seeded = true;
+
+        const doctors = this._getFromLocalStorage('doctors');
+        if (doctors.length === 0) {
+            const now = new Date().toISOString();
+            const demoHash = await hashPassword('medico123');
+            const sampleDoctors = [
+                {
+                    id: generateId(), name: 'Dr. Juan Pérez', specialty: 'Cardiología',
+                    email: 'juan.perez@hospital.com', phone: '+1234567890',
+                    username: 'jperez', passwordHash: demoHash, photo: null,
+                    createdAt: now, updatedAt: now
+                },
+                {
+                    id: generateId(), name: 'Dra. María García', specialty: 'Neurología',
+                    email: 'maria.garcia@hospital.com', phone: '+1234567891',
+                    username: 'mgarcia', passwordHash: demoHash, photo: null,
+                    createdAt: now, updatedAt: now
+                },
+                {
+                    id: generateId(), name: 'Dr. Carlos López', specialty: 'Pediatría',
+                    email: 'carlos.lopez@hospital.com', phone: '+1234567892',
+                    username: 'clopez', passwordHash: demoHash, photo: null,
+                    createdAt: now, updatedAt: now
+                }
+            ];
+            this._saveToLocalStorage('doctors', { data: sampleDoctors, isBulk: true });
+            console.log('📝 Datos de ejemplo de médicos creados (modo local)');
+        }
+
+        const shifts = this._getFromLocalStorage('shifts');
+        if (shifts.length === 0) {
+            const doctors = this._getFromLocalStorage('doctors');
+            const now = new Date().toISOString();
+            const sampleShifts = [];
+            for (let i = 1; i <= 5; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                sampleShifts.push({
+                    id: generateId(),
+                    doctorId: doctors[i % doctors.length]?.id,
+                    date: formatDateLocal(date),
+                    type: i % 2 === 0 ? 'noche' : 'mañana',
+                    startTime: i % 2 === 0 ? '19:00' : '07:00',
+                    endTime: i % 2 === 0 ? '07:00' : '19:00',
+                    notes: '',
+                    createdAt: now, updatedAt: now
+                });
+            }
+            this._saveToLocalStorage('shifts', { data: sampleShifts, isBulk: true });
+            console.log('📝 Datos de ejemplo de turnos creados (modo local)');
         }
     }
 
@@ -129,34 +178,35 @@ class DataManager {
         if (this.useFirebase && this.db) {
             el.classList.remove('offline');
             el.classList.add('online');
+            if (icon) icon.className = 'fas fa-cloud';
             if (text) text.textContent = 'En la Nube';
             el.title = 'Sincronizado con Firebase Cloud';
         } else {
             el.classList.remove('online');
             el.classList.add('offline');
+            if (icon) icon.className = 'fas fa-exclamation-triangle';
             if (text) text.textContent = 'Modo Local';
-            el.title = 'Guardando solo en este dispositivo (LocalStorage)';
+            el.title = 'Guardando solo en este dispositivo';
         }
     }
 
     // ==========================================
-    // CRUD Operations
+    // CRUD
     // ==========================================
 
     async getAll(collectionName) {
         if (this.useFirebase && this.db) {
             try {
                 const querySnapshot = await getDocs(collection(this.db, collectionName));
-                return querySnapshot.docs.map(doc => ({
-                    ...doc.data(),
-                    id: doc.id.toString().trim()
+                return querySnapshot.docs.map(docSnap => ({
+                    ...docSnap.data(),
+                    id: docSnap.id
                 }));
             } catch (error) {
                 console.error(`❌ Firestore getAll error (${collectionName}):`, error);
 
-                // Si es un error de permisos, notificar a la app
                 if (error.code === 'permission-denied') {
-                    console.warn('⚠️ Error de permisos detectado. Usando modo de emergencia (Local).');
+                    console.warn('⚠️ Error de permisos detectado. Usando modo local.');
                     this.useFirebase = false;
                     this.hasPermissionsError = true;
                     this.updateSyncStatusUI();
@@ -164,25 +214,11 @@ class DataManager {
                         detail: { collection: collectionName }
                     }));
                 }
-
-                return this._getFromLocalStorage(collectionName);
             }
         }
 
-        // When in local mode or fallback, proactively clean up records with no/invalid IDs
-        const localData = this._getFromLocalStorage(collectionName);
-        const validData = localData.filter(item => {
-            const itemId = (item.id || '').toString().trim();
-            return itemId !== '' && itemId !== 'undefined' && itemId !== 'null';
-        });
-
-        if (validData.length !== localData.length) {
-            console.log(`🧹 DataManager: Purged ${localData.length - validData.length} invalid records from ${collectionName}`);
-            localStorage.setItem(collectionName, JSON.stringify(validData));
-            window.dispatchEvent(new Event('storage'));
-        }
-
-        return validData;
+        await this._seedIfNeeded();
+        return this._getValidLocalData(collectionName);
     }
 
     async getById(collectionName, id) {
@@ -190,7 +226,7 @@ class DataManager {
 
         if (this.useFirebase && this.db) {
             try {
-                const docRef = doc(this.db, collectionName, id.toString());
+                const docRef = doc(this.db, collectionName, String(id));
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     return { id: docSnap.id, ...docSnap.data() };
@@ -202,146 +238,179 @@ class DataManager {
         }
 
         const items = await this.getAll(collectionName);
-        return items.find(item => item.id.toString() === id.toString());
+        return items.find(item => String(item.id) === String(id)) || null;
     }
 
     async save(collectionName, data, id = null) {
-        // Force ID to string if provided and trim to avoid whitespace issues
-        let finalId = id ? id.toString().trim() : null;
-        if (finalId === 'undefined' || finalId === '') finalId = null;
+        let finalId = id ? String(id).trim() : null;
+        if (!finalId || finalId === 'undefined') finalId = null;
 
-        const items = await this.getAll(collectionName);
         const timestamp = new Date().toISOString();
-
-        const payload = {
-            ...data,
-            updatedAt: timestamp
-        };
-
-        // Important: Remove 'id' from the payload before saving to Firestore
-        // to avoid overwriting the 'doc.id' field when loading back.
+        const payload = { ...data, updatedAt: timestamp };
+        if (!finalId) payload.createdAt = timestamp;
         delete payload.id;
 
         if (this.useFirebase && this.db) {
             try {
                 if (finalId) {
-                    const docRef = doc(this.db, collectionName, finalId);
-                    await setDoc(docRef, payload, { merge: true });
-                    console.log(`✅ DataManager: Update success (${collectionName}/${finalId})`);
+                    await setDoc(doc(this.db, collectionName, finalId), payload, { merge: true });
                     return finalId;
                 } else {
-                    payload.createdAt = timestamp;
                     const docRef = await addDoc(collection(this.db, collectionName), payload);
-                    console.log(`✅ DataManager: Create success (${collectionName}/${docRef.id})`);
                     return docRef.id;
                 }
             } catch (error) {
                 console.error(`❌ Firestore save error (${collectionName}):`, error);
-
                 if (error.code === 'permission-denied') {
+                    this.useFirebase = false;
+                    this.hasPermissionsError = true;
+                    this.updateSyncStatusUI();
                     window.dispatchEvent(new CustomEvent('uci_firebase_permissions_error', {
                         detail: { collection: collectionName, action: 'save' }
                     }));
                 }
-
-                // Don't fall back to local on write error to avoid data loss/desync
                 throw error;
             }
-        } else {
-            if (!id) payload.createdAt = timestamp;
-            return this._saveToLocalStorage(collectionName, payload, id);
         }
+
+        return this._saveToLocalStorage(collectionName, payload, finalId);
     }
 
     async delete(collectionName, id) {
+        const finalId = String(id).trim();
         let success = false;
-        const finalId = id.toString().trim();
-        console.log(`🗑️ DataManager: Attempting to delete from ${collectionName} ID: ${finalId}`);
 
         if (this.useFirebase && this.db) {
             try {
                 await deleteDoc(doc(this.db, collectionName, finalId));
-                console.log(`🗑️ DataManager: Firestore delete success (${collectionName}/${finalId})`);
                 success = true;
             } catch (error) {
-                console.error(`❌ DataManager: Firestore delete error (${collectionName}):`, error);
+                console.error(`❌ Firestore delete error (${collectionName}):`, error);
             }
         }
 
-        // Always attempt to remove from LocalStorage as well to clear "ghost" data
         const localSuccess = this._deleteFromLocalStorage(collectionName, finalId);
-        console.log(`🗑️ DataManager: LocalStorage delete ${localSuccess ? 'success' : 'failed'} for ${finalId}`);
         return success || localSuccess;
     }
 
     // ==========================================
-    // Real-time Listeners
+    // Listener en tiempo real
     // ==========================================
 
+    /**
+     * Registra un callback para cambios en una colección.
+     * Si Firebase aún no está listo, la suscripción se encola y se activa al conectar.
+     */
     subscribe(collectionName, callback) {
-        if (this.useFirebase && this.db) {
-            try {
-                // Simplified query without orderBy to avoid index requirement for now
-                const q = query(collection(this.db, collectionName));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const changes = snapshot.docChanges().map(change => ({
-                        type: change.type,
-                        id: change.doc.id,
-                        data: change.doc.data()
-                    }));
-
-                    // Only callback if there are actual changes
-                    if (changes.length > 0) {
-                        console.log(`🔥 [${collectionName}] Real-time change detected:`, changes.length, 'items');
-                        callback(changes);
-                    }
-                }, (error) => {
-                    console.error(`❌ Firestore Snapshot error (${collectionName}):`, error);
-                });
-
-                this.listeners.set(collectionName, unsubscribe);
-                return unsubscribe;
-            } catch (error) {
-                console.error(`❌ Subscribe error (${collectionName}):`, error);
-            }
+        const key = `${collectionName}`;
+        if (!this.pendingSubscriptions.has(key)) {
+            this.pendingSubscriptions.set(key, new Set());
         }
-        return () => { };
+        this.pendingSubscriptions.get(key).add(callback);
+
+        if (this.useFirebase && this.db) {
+            this._attachSubscription(collectionName, callback);
+        }
+
+        return () => {
+            this.pendingSubscriptions.get(key)?.delete(callback);
+            const existing = this.listeners.get(key);
+            if (existing) {
+                existing();
+                this.listeners.delete(key);
+            }
+        };
     }
 
-    unsubscribeAll() {
-        this.listeners.forEach(unsubscribe => unsubscribe());
-        this.listeners.clear();
+    _attachPendingSubscriptions() {
+        this.pendingSubscriptions.forEach((callbacks, key) => {
+            if (this.listeners.has(key)) {
+                this.listeners.get(key)();
+                this.listeners.delete(key);
+            }
+            callbacks.forEach(callback => this._attachSubscription(key, callback));
+        });
+    }
+
+    _attachSubscription(collectionName, callback) {
+        try {
+            const q = query(collection(this.db, collectionName));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const changes = snapshot.docChanges().map(change => ({
+                    type: change.type,
+                    id: change.doc.id,
+                    data: change.doc.data()
+                }));
+                if (changes.length > 0) {
+                    callback(changes);
+                }
+            }, (error) => {
+                console.error(`❌ Firestore Snapshot error (${collectionName}):`, error);
+                if (error.code === 'permission-denied') {
+                    this.useFirebase = false;
+                    this.hasPermissionsError = true;
+                    this.updateSyncStatusUI();
+                    window.dispatchEvent(new CustomEvent('uci_firebase_permissions_error', {
+                        detail: { collection: collectionName }
+                    }));
+                }
+            });
+
+            this.listeners.set(collectionName, unsubscribe);
+        } catch (error) {
+            console.error(`❌ Subscribe error (${collectionName}):`, error);
+        }
     }
 
     // ==========================================
-    // LocalStorage Implementation (Private)
+    // LocalStorage (implementación privada)
     // ==========================================
 
     _getFromLocalStorage(collectionName) {
         try {
-            const data = localStorage.getItem(collectionName);
-            return data ? JSON.parse(data) : [];
+            const raw = localStorage.getItem(collectionName);
+            return raw ? JSON.parse(raw) : [];
         } catch (e) {
             console.error('LocalStorage Read Error:', e);
             return [];
         }
     }
 
+    _getValidLocalData(collectionName) {
+        const localData = this._getFromLocalStorage(collectionName);
+        const valid = localData.filter(item => {
+            const itemId = String(item.id || '').trim();
+            return itemId !== '' && itemId !== 'undefined' && itemId !== 'null';
+        });
+        if (valid.length !== localData.length) {
+            localStorage.setItem(collectionName, JSON.stringify(valid));
+            window.dispatchEvent(new Event('storage'));
+        }
+        return valid;
+    }
+
     _saveToLocalStorage(collectionName, data, id) {
         try {
+            // Soporte para guardado masivo (seed)
+            if (data && data.isBulk && Array.isArray(data.data)) {
+                localStorage.setItem(collectionName, JSON.stringify(data.data));
+                window.dispatchEvent(new Event('storage'));
+                return true;
+            }
+
             const items = this._getFromLocalStorage(collectionName);
             let newId = id;
 
             if (id) {
-                const finalId = id.toString().trim();
-                const index = items.findIndex(item => item.id && item.id.toString().trim() === finalId);
+                const finalId = String(id).trim();
+                const index = items.findIndex(item => String(item.id).trim() === finalId);
                 if (index !== -1) {
                     items[index] = { ...items[index], ...data, id: finalId };
                 } else {
                     items.push({ ...data, id: finalId });
                 }
             } else {
-                newId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+                newId = generateId();
                 items.push({ ...data, id: newId });
             }
 
@@ -356,20 +425,24 @@ class DataManager {
 
     _deleteFromLocalStorage(collectionName, id) {
         try {
-            const finalId = id.toString().trim();
+            const finalId = String(id).trim();
             const items = this._getFromLocalStorage(collectionName);
-            // Purge the item AND any items with empty IDs that might be stuck
-            const newItems = items.filter(item => {
-                const itemId = (item.id || '').toString().trim();
+            const filtered = items.filter(item => {
+                const itemId = String(item.id || '').trim();
                 return itemId !== finalId && itemId !== '' && itemId !== 'undefined';
             });
-            localStorage.setItem(collectionName, JSON.stringify(newItems));
+            localStorage.setItem(collectionName, JSON.stringify(filtered));
             window.dispatchEvent(new Event('storage'));
             return true;
         } catch (e) {
             console.error('LocalStorage Delete Error:', e);
             return false;
         }
+    }
+
+    /** Detecta el escape (usado para debug; no se elimina para no romper compatibilidad). */
+    get ready() {
+        return this._ready;
     }
 }
 

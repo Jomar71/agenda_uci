@@ -3,129 +3,157 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Agenda Médica - UCI</title>
-    <!-- CSS Moderno -->
-    <link rel="stylesheet" href="https://unpkg.com/open-props">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=3.0">
-    <link rel="stylesheet" href="css/styles-dashboard.css?v=1.0">
-    <link rel="stylesheet" href="css/responsive.css?v=3.0">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- PDF Libs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <meta name="description" content="Sistema de gestión de turnos médicos para Unidades de Cuidados Intensivos. Turnos SIMED - Agenda Médica UCI.">
+    <meta name="theme-color" content="#1e3a8a">
+    <title>Turnos SIMED - Agenda Médica UCI</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231e3a8a'/%3E%3Ctext x='8' y='12' font-size='10' text-anchor='middle' fill='white' font-family='Arial'%3E%E2%99%A5%3C/text%3E%3C/svg%3E">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=6.0">
+
+    <!-- Aplicar tema guardado antes del render (evita parpadeo) -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('uci_theme');
+                var theme = saved ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
 </head>
 
 <body>
-    <!-- Diagnostic Banner for Firebase Errors -->
+
+    <!-- Overlay de carga -->
+    <div id="loading-overlay" class="loading-overlay" aria-hidden="true">
+        <div class="loading-spinner" role="status" aria-label="Cargando"></div>
+        <p class="loading-text">Cargando sistema...</p>
+    </div>
+
+    <!-- Banner diagnóstico -->
     <div id="diagnostic-banner" class="diagnostic-banner" style="display: none;"></div>
 
     <!-- Header -->
-    <header class="header">
+    <header class="header" id="header">
         <div class="header-container">
-            <div class="logo">
-                <i class="fas fa-heartbeat"></i>
-                <h1>Turnos SIMED</h1>
-                <div id="sync-status" class="sync-status offline" title="Estado de conexión">
-                    <i class="fas fa-cloud"></i>
-                    <span class="status-text">Sin Sincronizar</span>
-                </div>
-            </div>
-            <nav class="nav">
+            <a href="#inicio" class="logo" id="logo-link" aria-label="Ir al inicio">
+                <i class="fas fa-heartbeat" aria-hidden="true"></i>
+                <span class="logo-text">
+                    <h1>Turnos SIMED</h1>
+                    <small>Unidad de Cuidados Intensivos</small>
+                </span>
+                <span id="sync-status" class="sync-status offline" title="Estado de conexión">
+                    <i class="fas fa-cloud" aria-hidden="true"></i>
+                    <span class="status-text">Conectando...</span>
+                </span>
+            </a>
+
+            <nav class="nav" id="main-nav" aria-label="Navegación principal">
                 <ul class="nav-list">
-                    <li><a href="#inicio" class="nav-link active">Inicio</a></li>
-                    <li><a href="#medicos" class="nav-link">Médicos</a></li>
-                    <li><a href="#turnos" class="nav-link">Turnos</a></li>
-                    <li id="admin-nav" style="display: none;"><a href="#admin" class="nav-link">Admin</a></li>
+                    <li><a href="#inicio" class="nav-link active" data-section="inicio">Inicio</a></li>
+                    <li id="medicos-nav"><a href="#medicos" class="nav-link" data-section="medicos">Médicos</a></li>
+                    <li><a href="#turnos" class="nav-link" data-section="turnos">Turnos</a></li>
+                    <li id="documents-nav"><a href="#documentos" class="nav-link" data-section="documentos">Documentos</a></li>
+                    <li id="admin-nav"><a href="#admin" class="nav-link" data-section="admin">Admin</a></li>
                 </ul>
+                <div class="nav-user" id="mobile-user-menu"></div>
             </nav>
-            <div class="user-menu">
-                <button id="login-btn" class="btn btn-primary">Iniciar Sesión</button>
-                <div id="user-info" style="display: none;">
-                    <span id="user-name"></span>
-                    <button id="logout-btn" class="btn btn-secondary">Cerrar Sesión</button>
-                </div>
-            </div>
-            <button class="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
+
+            <div class="user-menu" id="desktop-user-menu"></div>
+
+            <button class="icon-btn" id="theme-toggle" type="button" aria-label="Cambiar tema">
+                <i class="fas fa-moon" aria-hidden="true"></i>
+            </button>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menú" aria-expanded="false">
+                <i class="fas fa-bars" aria-hidden="true"></i>
             </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main">
+    <div class="nav-overlay" id="nav-overlay"></div>
+
+    <!-- Contenido principal -->
+    <main class="main" id="main">
+
         <!-- Sección Inicio -->
-        <div id="inicio" class="section active animate__animated animate__fadeIn">
-            <!-- Hero Header -->
-            <div class="hero-header text-center mb-5">
-                <h2
-                    style="font-size: 2.5rem; color: #1f2937; margin-bottom: 0.5rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
-                    Bienvenido al Sistema de Gestión UCI</h2>
-                <p class="text-muted" style="font-size: 1.1rem; color: #9ca3af;">Sistema especializado para la gestión
-                    de turnos médicos en Unidades de Cuidados Intensivos</p>
+        <section id="inicio" class="section active">
+            <div class="section-header">
+                <div>
+                    <h2>Panel de Control</h2>
+                    <p class="section-subtitle">Resumen de la actividad de la unidad</p>
+                </div>
+                <div class="controls">
+                    <span class="today-chip">
+                        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                        <span id="today-label"></span>
+                    </span>
+                </div>
             </div>
 
-            <!-- Top Panel: Info & Stats -->
-            <div class="dashboard-panel mb-4">
-                <div class="dashboard-split">
-                    <!-- Left: Text Info -->
-                    <div class="dashboard-info-col">
-                        <p class="lead-text" style="color: #d1d5db; font-size: 1.1rem; line-height: 1.6;">Nuestra Unidad
-                            de Cuidados Intensivos cuenta con tecnología de punta y personal altamente calificado para
-                            brindar la mejor atención a pacientes críticos.</p>
-
-                        <div class="features-list" style="margin-top: 2rem;">
-                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
-                                    style="color: #e5e7eb;">Monitoreo 24/7</span>
-                            </div>
-                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
-                                    style="color: #e5e7eb;">Equipo multidisciplinario</span>
-                            </div>
-                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
-                                    style="color: #e5e7eb;">Protocolos actualizados</span>
-                            </div>
-                            <div class="feature-item" style="display: flex; align-items: center; margin-bottom: 1rem;">
-                                <i class="fas fa-check" style="color: #10b981; margin-right: 12px;"></i> <span
-                                    style="color: #e5e7eb;">Atención personalizada</span>
-                            </div>
-                        </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-primary">
+                        <i class="fas fa-user-md" aria-hidden="true"></i>
                     </div>
-
-                    <!-- Right: Stat Cards Stack -->
-                    <div class="dashboard-stats-col">
-                        <div class="stat-card-blue card-gradient-1">
-                            <i class="fas fa-user-md"></i>
-                            <div class="stat-value" id="total-doctors">3</div>
-                            <div class="stat-label">Médicos Especializados</div>
-                        </div>
-                        <div class="stat-card-blue card-gradient-2">
-                            <i class="fas fa-procedures"></i>
-                            <div class="stat-value">20</div>
-                            <div class="stat-label">Camas UCI</div>
-                        </div>
-                        <div class="stat-card-blue card-gradient-3">
-                            <i class="fas fa-clock"></i>
-                            <div class="stat-value">24/7</div>
-                            <div class="stat-label">Atención Continua</div>
-                        </div>
+                    <div class="stat-body">
+                        <span class="stat-value" id="stat-doctors">0</span>
+                        <span class="stat-label">Médicos registrados</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-info">
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-body">
+                        <span class="stat-value" id="stat-today">0</span>
+                        <span class="stat-label">Turnos de hoy</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-success">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-body">
+                        <span class="stat-value" id="stat-upcoming">0</span>
+                        <span class="stat-label">Próximos turnos</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-warning">
+                        <i class="fas fa-procedures" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-body">
+                        <span class="stat-value">20</span>
+                        <span class="stat-label">Camas UCI</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Panel: Calendar -->
-            <div class="dashboard-panel">
-                <div id="monthly-calendar" style="width: 100%;"></div>
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-calendar-alt" aria-hidden="true"></i> Calendario mensual</h3>
+                    </div>
+                    <div id="monthly-calendar" class="monthly-calendar"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-list-ul" aria-hidden="true"></i> Próximos turnos</h3>
+                    </div>
+                    <div id="upcoming-shifts" class="upcoming-shifts"></div>
+                </div>
             </div>
-        </div>
-        </div>
-        </div>
+        </section>
 
         <!-- Sección Médicos -->
         <section id="medicos" class="section">
@@ -133,10 +161,10 @@
                 <h2>Nuestro Equipo Médico</h2>
                 <div class="controls">
                     <div class="search-box">
-                        <input type="text" id="doctor-search" placeholder="Buscar médico...">
-                        <i class="fas fa-search"></i>
+                        <input type="search" id="doctor-search" placeholder="Buscar médico..." aria-label="Buscar médico">
+                        <i class="fas fa-search" aria-hidden="true"></i>
                     </div>
-                    <select id="specialty-filter">
+                    <select id="specialty-filter" aria-label="Filtrar por especialidad">
                         <option value="">Todas las especialidades</option>
                     </select>
                 </div>
@@ -148,22 +176,60 @@
         <section id="turnos" class="section">
             <div class="section-header">
                 <h2>Gestión de Turnos</h2>
-                <div class="view-controls">
-                    <button class="btn view-btn active" data-view="month">Mensual</button>
-                    <button class="btn view-btn" data-view="week">Semanal</button>
-                    <button class="btn view-btn" data-view="day">Diario</button>
+                <div class="controls view-controls">
+                    <div class="view-toggle" role="group" aria-label="Cambiar vista de calendario">
+                        <button class="btn view-btn active" data-view="month">Mensual</button>
+                        <button class="btn view-btn" data-view="week">Semanal</button>
+                        <button class="btn view-btn" data-view="day">Diario</button>
+                    </div>
                     <button id="add-shift-btn" class="btn btn-primary" style="display: none;">
-                        <i class="fas fa-plus"></i> Nuevo Turno
+                        <i class="fas fa-plus" aria-hidden="true"></i> Nuevo Turno
                     </button>
                 </div>
             </div>
             <div class="calendar-container">
                 <div class="calendar-header">
-                    <button id="prev-period"><i class="fas fa-chevron-left"></i></button>
+                    <button id="prev-period" class="period-btn" aria-label="Período anterior"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
                     <h3 id="current-period"></h3>
-                    <button id="next-period"><i class="fas fa-chevron-right"></i></button>
+                    <button id="next-period" class="period-btn" aria-label="Período siguiente"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
                 </div>
-                <div id="calendar-view"></div>
+                <div class="calendar-scroll">
+                    <div id="calendar-view"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Documentos -->
+        <section id="documentos" class="section">
+            <div class="section-header">
+                <h2>Documentos</h2>
+                <p class="section-subtitle">Genera reportes y certificados en PDF</p>
+            </div>
+            <div class="admin-cards">
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-primary"><i class="fas fa-calendar-alt" aria-hidden="true"></i></div>
+                    <h3>Reporte Mensual de Guardias</h3>
+                    <p>Resumen de los turnos de un médico en el mes actual.</p>
+                    <button id="doc-monthly" class="btn btn-primary">
+                        <i class="fas fa-file-pdf" aria-hidden="true"></i> Generar Reporte
+                    </button>
+                </div>
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-info"><i class="fas fa-user-md" aria-hidden="true"></i></div>
+                    <h3>Historial por Médico</h3>
+                    <p>Turnos de un médico en un periodo.</p>
+                    <button id="doc-doctor" class="btn btn-primary">
+                        <i class="fas fa-file-pdf" aria-hidden="true"></i> Seleccionar Médico
+                    </button>
+                </div>
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-success"><i class="fas fa-file-contract" aria-hidden="true"></i></div>
+                    <h3>Certificado Laboral</h3>
+                    <p>Certificado de constancia de trabajo.</p>
+                    <button id="doc-cert" class="btn btn-primary">
+                        <i class="fas fa-file-pdf" aria-hidden="true"></i> Seleccionar Médico
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -171,123 +237,139 @@
         <section id="admin" class="section">
             <div class="section-header">
                 <h2>Panel de Administración</h2>
+                <p class="section-subtitle">Herramientas exclusivas del administrador</p>
             </div>
-            <div class="admin-dashboard">
-                <div class="admin-cards">
-                    <div class="admin-card">
-                        <h3><i class="fas fa-user-md"></i> Gestión de Médicos</h3>
-                        <button id="manage-doctors" class="btn btn-primary">Gestionar Médicos</button>
-                    </div>
-                    <div class="admin-card">
-                        <h3><i class="fas fa-calendar-alt"></i> Gestión de Turnos</h3>
-                        <button id="manage-shifts" class="btn btn-primary">Gestionar Turnos</button>
-                    </div>
-                    <div class="admin-card">
-                        <h3><i class="fas fa-file-pdf"></i> Reportes</h3>
-                        <button id="generate-reports" class="btn btn-primary">Generar Reportes</button>
-                    </div>
-                    <div class="admin-card">
-                        <h3><i class="fas fa-download"></i> Backup</h3>
-                        <button id="backup-data" class="btn btn-secondary">Descargar Backup</button>
-                    </div>
+            <div class="admin-cards">
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-primary"><i class="fas fa-user-md" aria-hidden="true"></i></div>
+                    <h3>Gestión de Médicos</h3>
+                    <p>Agrega, edita o elimina médicos del equipo.</p>
+                    <button id="manage-doctors" class="btn btn-light">Gestionar Médicos</button>
+                </div>
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-warning"><i class="fas fa-calendar-alt" aria-hidden="true"></i></div>
+                    <h3>Gestión de Turnos</h3>
+                    <p>Organiza los turnos del calendario.</p>
+                    <button id="manage-shifts" class="btn btn-light">Gestionar Turnos</button>
+                </div>
+                <div class="admin-card">
+                    <div class="admin-card-icon icon-danger"><i class="fas fa-download" aria-hidden="true"></i></div>
+                    <h3>Respaldo de Datos</h3>
+                    <p>Descarga una copia de seguridad en JSON.</p>
+                    <button id="backup-data" class="btn btn-light">Descargar Backup</button>
                 </div>
             </div>
         </section>
     </main>
 
+    <footer class="footer">
+        <p>© <span id="current-year"></span> Turnos SIMED · Unidad de Cuidados Intensivos · Sistema de Gestión de Turnos Médicos</p>
+    </footer>
+
     <!-- Modales -->
+
     <!-- Modal Login -->
-    <div id="login-modal" class="modal" style="display: none;">
+    <div id="login-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Iniciar Sesión</h2>
-            <form id="login-form">
+            <button type="button" class="modal-close close" aria-label="Cerrar">&times;</button>
+            <h2 id="login-modal-title">Iniciar Sesión</h2>
+            <form id="login-form" novalidate>
                 <div class="form-group">
-                    <label for="username">Usuario:</label>
-                    <input type="text" id="username" required>
+                    <label for="login-username">Usuario</label>
+                    <input type="text" id="login-username" placeholder="Ingresa tu usuario" autocomplete="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Contraseña:</label>
-                    <input type="password" id="password" required>
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Ingresar</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-block" id="login-submit-btn">Ingresar</button>
+                </div>
+                <p class="form-hint">Solo personal autorizado de la unidad.</p>
             </form>
         </div>
     </div>
 
     <!-- Modal Doctor -->
-    <div id="doctor-modal" class="modal" style="display: none;">
+    <div id="doctor-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="doctor-modal-title">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <button type="button" class="modal-close close" aria-label="Cerrar">&times;</button>
             <h2 id="doctor-modal-title">Nuevo Médico</h2>
-            <form id="doctor-form">
+            <form id="doctor-form" novalidate>
                 <input type="hidden" id="doctor-id">
 
-                <!-- Foto Centrada -->
                 <div class="photo-upload-container">
-                    <div id="doctor-photo-preview">
-                        <i class="fas fa-user-md photo-upload-icon"></i>
+                    <div id="doctor-photo-preview" class="photo-preview">
+                        <i class="fas fa-user-md photo-upload-icon" aria-hidden="true"></i>
                     </div>
                     <p class="photo-status" id="photo-status-text">No hay foto seleccionada</p>
-                    <input type="file" id="doctor-photo" accept="image/*" class="form-control"
-                        style="max-width: 250px;">
-                    <small style="color: #64748b; display: block; margin-top: 5px;">Formatos: JPG, PNG, GIF (Máx.
-                        2MB)</small>
+                    <label class="btn btn-secondary btn-file">
+                        <i class="fas fa-upload" aria-hidden="true"></i> Seleccionar foto
+                        <input type="file" id="doctor-photo" accept="image/*" hidden>
+                    </label>
+                    <small class="field-hint">Formatos: JPG, PNG, GIF (Máx. 2MB)</small>
                 </div>
 
-                <!-- Inputs Grid -->
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="doctor-name">Nombre completo</label>
                         <input type="text" id="doctor-name" placeholder="Nombre completo" required>
                     </div>
                     <div class="form-group">
+                        <label for="doctor-specialty">Especialidad</label>
                         <input type="text" id="doctor-specialty" placeholder="Especialidad" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <input type="email" id="doctor-email" placeholder="Email" required>
+                        <label for="doctor-email">Email</label>
+                        <input type="email" id="doctor-email" placeholder="correo@hospital.com" required>
                     </div>
                     <div class="form-group">
+                        <label for="doctor-phone">Teléfono</label>
                         <input type="tel" id="doctor-phone" placeholder="Teléfono" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <input type="text" id="doctor-username" placeholder="Usuario" required>
+                        <label for="doctor-username">Usuario</label>
+                        <input type="text" id="doctor-username" placeholder="Usuario de acceso" required>
                     </div>
                     <div class="form-group">
-                        <input type="password" id="doctor-password" placeholder="Contraseña requerida">
-                        <small style="color: #64748b; font-size: 0.75rem;">Para nuevos médicos, la contraseña es
-                            obligatoria</small>
+                        <label for="doctor-password">Contraseña</label>
+                        <input type="password" id="doctor-password" placeholder="Contraseña requerida" autocomplete="new-password">
+                        <small class="field-hint" id="doctor-password-hint">Para nuevos médicos, la contraseña es obligatoria</small>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="save-doctor-btn">Guardar Médico</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="save-doctor-btn">Guardar Médico</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-doctor-btn">Cancelar</button>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- Modal Turno -->
-    <div id="shift-modal" class="modal" style="display: none;">
+    <div id="shift-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="shift-modal-title">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <button type="button" class="modal-close close" aria-label="Cerrar">&times;</button>
             <h2 id="shift-modal-title">Nuevo Turno</h2>
-            <form id="shift-form">
+            <form id="shift-form" novalidate>
                 <input type="hidden" id="shift-id">
                 <div class="form-group">
-                    <label for="shift-doctor">Médico:</label>
+                    <label for="shift-doctor">Médico</label>
                     <select id="shift-doctor" required>
                         <option value="">Seleccionar médico</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="shift-date">Fecha:</label>
+                        <label for="shift-date">Fecha</label>
                         <input type="date" id="shift-date" required>
                     </div>
                     <div class="form-group">
-                        <label for="shift-type">Tipo de Turno (12h):</label>
+                        <label for="shift-type">Tipo de Turno (12h)</label>
                         <select id="shift-type" required>
                             <option value="">Seleccionar tipo</option>
                             <option value="mañana">Día (07:00 - 19:00)</option>
@@ -298,33 +380,33 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="shift-start">Hora Inicio:</label>
+                        <label for="shift-start">Hora Inicio</label>
                         <input type="time" id="shift-start" value="07:00" required>
                     </div>
                     <div class="form-group">
-                        <label for="shift-end">Hora Fin:</label>
+                        <label for="shift-end">Hora Fin</label>
                         <input type="time" id="shift-end" value="19:00" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="shift-notes">Notas:</label>
-                    <textarea id="shift-notes" rows="3"></textarea>
+                    <label for="shift-notes">Notas</label>
+                    <textarea id="shift-notes" rows="3" placeholder="Notas adicionales del turno (opcional)"></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-primary" id="save-shift-btn">Guardar</button>
                     <button type="button" class="btn btn-secondary" id="cancel-shift-btn">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="delete-shift-btn"
-                        style="display: none;">Eliminar</button>
+                    <button type="button" class="btn btn-danger" id="delete-shift-btn" style="display: none;">Eliminar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Notificaciones -->
-    <div id="notifications"></div>
+    <div id="notifications" class="notifications" aria-live="polite"></div>
 
     <!-- Scripts -->
-    <!-- Scripts Modulares -->
+    <script src="assets/vendor/jspdf.umd.min.js" defer></script>
+    <script src="assets/vendor/jspdf.plugin.autotable.min.js" defer></script>
     <script type="module" src="js/app.js"></script>
 </body>
 
