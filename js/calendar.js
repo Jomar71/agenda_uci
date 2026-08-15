@@ -30,6 +30,22 @@ export class CalendarManager {
                 this.nextMonth();
             }
         });
+        document.body.addEventListener('change', (e) => {
+            const picker = e.target.closest('#month-picker');
+            if (picker && picker.value) {
+                this.gotoDate(picker.value);
+            }
+        });
+    }
+
+    gotoDate(dateStr) {
+        const parts = String(dateStr).split('-');
+        if (parts.length !== 3) return;
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        if (Number.isNaN(year) || Number.isNaN(month)) return;
+        this.currentDate = new Date(year, month, 1);
+        this.renderMonthlyPreview();
     }
 
     prevMonth() {
@@ -56,6 +72,8 @@ export class CalendarManager {
         const monthName = this.currentDate
             .toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
+        const pickerDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
         const firstDay = new Date(year, month, 1);
         const start = new Date(firstDay);
         start.setDate(start.getDate() - start.getDay());
@@ -65,6 +83,7 @@ export class CalendarManager {
                 <h4>${escapeHtml(monthName)}</h4>
                 <div class="nav-buttons">
                     <button id="prev-month" class="nav-btn-circle" aria-label="Mes anterior"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <input type="date" id="month-picker" class="month-picker" value="${pickerDate}" title="Ir a una fecha" aria-label="Ir a una fecha">
                     <button id="next-month" class="nav-btn-circle" aria-label="Mes siguiente"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
                 </div>
             </div>

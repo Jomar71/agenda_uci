@@ -72,6 +72,9 @@ export class ShiftsManager {
     setupEventListeners() {
         document.getElementById('prev-period')?.addEventListener('click', () => this.navigate(-1));
         document.getElementById('next-period')?.addEventListener('click', () => this.navigate(1));
+        document.getElementById('period-picker')?.addEventListener('change', (e) => {
+            if (e.target.value) this.gotoDate(e.target.value);
+        });
 
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -151,6 +154,39 @@ export class ShiftsManager {
         this.renderCalendar();
     }
 
+    gotoDate(dateStr) {
+        const parts = String(dateStr).split('-');
+        if (parts.length !== 3) return;
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) return;
+
+        if (this.currentView === 'month') {
+            this.currentDate = new Date(year, month, 1);
+        } else if (this.currentView === 'week') {
+            this.currentDate = new Date(year, month, day);
+        } else {
+            this.currentDate = new Date(year, month, day);
+        }
+        this.renderCalendar();
+    }
+
+    syncPeriodPicker() {
+        const picker = document.getElementById('period-picker');
+        if (!picker) return;
+        let value;
+        if (this.currentView === 'month') {
+            value = `${this.currentDate.getFullYear()}-${String(this.currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+        } else if (this.currentView === 'week') {
+            const start = this.getStartOfWeek(this.currentDate);
+            value = formatDateLocal(start);
+        } else {
+            value = formatDateLocal(this.currentDate);
+        }
+        picker.value = value;
+    }
+
     renderCalendar() {
         const container = document.getElementById('calendar-view');
         if (!container) return;
@@ -182,6 +218,7 @@ export class ShiftsManager {
         }
 
         container.innerHTML = html;
+        this.syncPeriodPicker();
     }
 
     getStartOfWeek(date) {

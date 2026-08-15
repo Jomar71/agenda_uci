@@ -808,6 +808,26 @@ body.is-medic #medicos-nav {
     border-color: var(--primary);
 }
 
+.month-picker {
+    height: 36px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.month-picker:hover,
+.month-picker:focus {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-color: var(--primary);
+    outline: none;
+}
+
 .calendar-scroll {
     overflow-x: auto;
 }
