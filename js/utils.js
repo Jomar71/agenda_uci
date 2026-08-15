@@ -21,8 +21,9 @@ export function getShiftType(type) {
 
 /**
  * Paleta de colores por médico (asignables por el administrador).
- * Incluye los 12 colores originales más 12 adicionales (nuevos matices
- * y variantes más oscuras) para maximizar la diferenciación entre médicos.
+ * Incluye los colores originales más gamas completas de amarillos,
+ * rojos, verdes, lilas, fucsia, cafés, blanco y negro para maximizar
+ * la diferenciación entre médicos.
  */
 export const DOCTOR_COLORS = [
     // Colores originales
@@ -50,7 +51,61 @@ export const DOCTOR_COLORS = [
     '#1d4ed8', // Azul oscuro
     '#166534', // Verde oscuro
     '#b91c1c', // Rojo oscuro
-    '#0f766e'  // Teal oscuro
+    '#0f766e', // Teal oscuro
+    // Gama de amarillos
+    '#fef9c3', // Amarillo muy claro
+    '#fef08a', // Amarillo claro
+    '#fde047', // Amarillo suave
+    '#facc15', // Amarillo
+    '#fbbf24', // Amarillo dorado
+    '#f59e0b', // Ámbar
+    '#d97706', // Ámbar oscuro
+    '#ca8a04', // Amarillo oliva
+    '#a16207', // Amarillo mostaza oscuro
+    // Gama de rojos
+    '#fecaca', // Rojo muy claro
+    '#fca5a5', // Rojo claro
+    '#f87171', // Rojo coral
+    '#dc2626', // Rojo intenso
+    '#b91c1c', // Rojo oscuro
+    '#991b1b', // Rojo granate
+    '#7f1d1d', // Rojo vino
+    // Gama de verdes
+    '#dcfce7', // Verde muy claro
+    '#bbf7d0', // Verde menta claro
+    '#86efac', // Verde menta
+    '#4ade80', // Verde brillante
+    '#22c55e', // Verde
+    '#16a34a', // Verde intenso
+    '#15803d', // Verde bosque
+    '#14532d', // Verde oscuro profundo
+    // Gama de lilas
+    '#f3e8ff', // Lila muy claro
+    '#e9d5ff', // Lila claro
+    '#d8b4fe', // Lila suave
+    '#c084fc', // Lila
+    '#a855f7', // Lila intenso
+    '#9333ea', // Lila profundo
+    '#7e22ce', // Lila oscuro
+    // Gama de fucsia
+    '#fae8ff', // Fucsia muy claro
+    '#f5d0fe', // Fucsia claro
+    '#f0abfc', // Fucsia suave
+    '#e879f9', // Fucsia
+    '#d946ef', // Fucsia intenso
+    '#c026d3', // Fucsia profundo
+    '#a21caf', // Fucsia oscuro
+    // Gama de cafés
+    '#d6a577', // Café claro
+    '#c28b5e', // Café medio claro
+    '#b07d5b', // Café canela
+    '#9a6a3f', // Café
+    '#8b5a2b', // Café intenso
+    '#6b4226', // Café oscuro
+    '#4a2f1d', // Café oscuro profundo
+    // Blanco y negro
+    '#ffffff', // Blanco
+    '#000000'  // Negro
 ];
 
 /** Calcula iniciales a partir de un nombre (ej: 'Dr. Juan Pérez' → 'JP'). */
