@@ -370,7 +370,8 @@ export class DoctorsManager {
         document.getElementById('doctor-username').value = doctor.username || '';
         document.getElementById('doctor-password').value = '';
         document.getElementById('doctor-initials').value = doctor.initials || '';
-        document.getElementById('doctor-color').value = doctor.color || '';
+        const colorInput = document.getElementById('doctor-color');
+        if (colorInput) colorInput.value = doctor.color || '';
         this.updatePhotoPreview(doctor.photo);
     }
 
@@ -378,7 +379,8 @@ export class DoctorsManager {
         document.getElementById('doctor-form').reset();
         document.getElementById('doctor-id').value = '';
         document.getElementById('doctor-initials').value = '';
-        document.getElementById('doctor-color').value = '';
+        const colorInput = document.getElementById('doctor-color');
+        if (colorInput) colorInput.value = '';
         this.updatePhotoPreview(null);
     }
 
@@ -392,7 +394,7 @@ export class DoctorsManager {
             username: document.getElementById('doctor-username').value,
             password: document.getElementById('doctor-password').value,
             initials: document.getElementById('doctor-initials').value,
-            color: document.getElementById('doctor-color').value
+            color: document.getElementById('doctor-color')?.value || ''
         };
     }
 

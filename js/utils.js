@@ -19,11 +19,38 @@ export function getShiftType(type) {
     return SHIFT_TYPES[type] || { label: type || 'Turno', color: '#6b7280', short: '?' };
 }
 
-/** Paleta de colores por médico (asignables por el administrador). */
+/**
+ * Paleta de colores por médico (asignables por el administrador).
+ * Incluye los 12 colores originales más 12 adicionales (nuevos matices
+ * y variantes más oscuras) para maximizar la diferenciación entre médicos.
+ */
 export const DOCTOR_COLORS = [
-    '#0ea5e9', '#f59e0b', '#10b981', '#ef4444',
-    '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-    '#3b82f6', '#22c55e', '#e11d48', '#06b6d4'
+    // Colores originales
+    '#0ea5e9', // Azul cielo
+    '#f59e0b', // Ámbar
+    '#10b981', // Esmeralda
+    '#ef4444', // Rojo
+    '#8b5cf6', // Violeta
+    '#ec4899', // Rosa
+    '#14b8a6', // Teal
+    '#f97316', // Naranja
+    '#3b82f6', // Azul
+    '#22c55e', // Verde
+    '#e11d48', // Carmesí
+    '#06b6d4', // Cian
+    // Colores adicionales
+    '#eab308', // Amarillo
+    '#84cc16', // Lima
+    '#6366f1', // Índigo
+    '#a855f7', // Púrpura
+    '#d946ef', // Fucsia
+    '#f43f5e', // Rosado
+    '#92400e', // Marrón
+    '#64748b', // Pizarra (gris azulado)
+    '#1d4ed8', // Azul oscuro
+    '#166534', // Verde oscuro
+    '#b91c1c', // Rojo oscuro
+    '#0f766e'  // Teal oscuro
 ];
 
 /** Calcula iniciales a partir de un nombre (ej: 'Dr. Juan Pérez' → 'JP'). */
