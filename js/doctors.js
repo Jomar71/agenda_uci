@@ -4,7 +4,10 @@
  */
 
 import { dataManager } from './services/data-manager.js';
-import { escapeHtml, hashPassword, debounce } from './utils.js';
+import {
+    escapeHtml, hashPassword, debounce,
+    DOCTOR_COLORS, computeInitials, getDoctorColor, getDoctorInitials, getContrastColor
+} from './utils.js';
 
 export class DoctorsManager {
     constructor(authManager) {
@@ -80,6 +83,17 @@ export class DoctorsManager {
         // Foto
         const photoInput = document.getElementById('doctor-photo');
         if (photoInput) photoInput.addEventListener('change', (e) => this.handlePhotoUpload(e));
+
+        // Autocompletar iniciales desde el nombre al salir del campo
+        const nameInput = document.getElementById('doctor-name');
+        const initialsInput = document.getElementById('doctor-initials');
+        if (nameInput && initialsInput) {
+            nameInput.addEventListener('blur', () => {
+                if (!initialsInput.value.trim() && nameInput.value.trim()) {
+                    initialsInput.value = computeInitials(nameInput.value);
+                }
+            });
+        }
 
         // Delegación de eventos en la grilla (persistente)
         const grid = document.getElementById('doctors-grid');
@@ -157,13 +171,20 @@ export class DoctorsManager {
             ? `<img src="${escapeHtml(doctor.photo)}" alt="${escapeHtml(doctor.name)}" loading="lazy">`
             : `<div class="placeholder-photo"><i class="fas fa-user-md" aria-hidden="true"></i></div>`;
 
+        const color = getDoctorColor(doctor);
+        const initials = getDoctorInitials(doctor);
+
         return `
             <div class="doctor-card" data-id="${escapeHtml(doctor.id)}">
-                <div class="doctor-photo-wrapper">
+                <div class="doctor-photo-wrapper" style="border-color: ${color};">
                     ${photoHTML}
                 </div>
                 <div class="doctor-info">
                     <h3>${escapeHtml(doctor.name)}</h3>
+                    <div class="doctor-color-chip" title="Color e iniciales en el calendario">
+                        <span class="chip-color" style="background-color: ${color};"></span>
+                        <span class="chip-text">${escapeHtml(initials)}</span>
+                    </div>
                     <span class="badge">${escapeHtml(doctor.specialty)}</span>
                     <p><i class="fas fa-envelope" aria-hidden="true"></i> ${escapeHtml(doctor.email)}</p>
                     <p><i class="fas fa-phone" aria-hidden="true"></i> ${escapeHtml(doctor.phone)}</p>
@@ -218,7 +239,36 @@ export class DoctorsManager {
             if (passwordHint) passwordHint.textContent = 'Para nuevos médicos, la contraseña es obligatoria';
         }
 
+        this.renderColorPalette(document.getElementById('doctor-color')?.value || null);
+
         this.auth.openModal(modal);
+    }
+
+    /** Renderiza la paleta de colores del médico en el formulario. */
+    renderColorPalette(selected = null) {
+        const palette = document.getElementById('doctor-color-palette');
+        if (!palette) return;
+
+        const colors = [...DOCTOR_COLORS];
+        if (selected) {
+            const normalized = String(selected).toLowerCase();
+            if (!colors.some(c => c.toLowerCase() === normalized)) colors.unshift(selected);
+        }
+
+        palette.innerHTML = colors.map(color => {
+            const active = selected && String(color).toLowerCase() === String(selected).toLowerCase();
+            return `<button type="button" class="color-swatch ${active ? 'active' : ''}" data-color="${color}"
+                style="--swatch: ${color};" aria-label="Color ${color}" title="Color ${color}"></button>`;
+        }).join('');
+
+        palette.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                palette.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                sw.classList.add('active');
+                const input = document.getElementById('doctor-color');
+                if (input) input.value = sw.dataset.color;
+            });
+        });
     }
 
     closeDoctorModal() {
@@ -237,6 +287,8 @@ export class DoctorsManager {
             email: formData.email.trim(),
             phone: formData.phone.trim(),
             username: formData.username.trim(),
+            initials: formData.initials.trim() || computeInitials(formData.name.trim()),
+            color: formData.color || getDoctorColor(existing, this.doctors.length),
             photo: this.currentPhoto || existing?.photo || null
         };
 
@@ -317,12 +369,16 @@ export class DoctorsManager {
         document.getElementById('doctor-phone').value = doctor.phone || '';
         document.getElementById('doctor-username').value = doctor.username || '';
         document.getElementById('doctor-password').value = '';
+        document.getElementById('doctor-initials').value = doctor.initials || '';
+        document.getElementById('doctor-color').value = doctor.color || '';
         this.updatePhotoPreview(doctor.photo);
     }
 
     clearForm() {
         document.getElementById('doctor-form').reset();
         document.getElementById('doctor-id').value = '';
+        document.getElementById('doctor-initials').value = '';
+        document.getElementById('doctor-color').value = '';
         this.updatePhotoPreview(null);
     }
 
@@ -334,7 +390,9 @@ export class DoctorsManager {
             email: document.getElementById('doctor-email').value,
             phone: document.getElementById('doctor-phone').value,
             username: document.getElementById('doctor-username').value,
-            password: document.getElementById('doctor-password').value
+            password: document.getElementById('doctor-password').value,
+            initials: document.getElementById('doctor-initials').value,
+            color: document.getElementById('doctor-color').value
         };
     }
 

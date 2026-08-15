@@ -8,7 +8,7 @@ import { DoctorsManager } from './doctors.js';
 import { ShiftsManager } from './shifts.js';
 import { CalendarManager } from './calendar.js';
 import { ReportsController } from './modules/reports.js';
-import { todayLocal } from './utils.js';
+import { todayLocal, getDoctorColor, getDoctorInitials, getContrastColor } from './utils.js';
 
 class App {
     constructor() {
@@ -244,12 +244,6 @@ class App {
                 </div>`;
         }
 
-        const typeColor = {
-            'mañana': '#0ea5e9', 'guardia': '#0ea5e9',
-            'noche': '#6366f1',
-            'especial': '#ef4444', 'emergencia': '#ef4444',
-            'consulta': '#10b981', 'descanso': '#94a3b8'
-        };
         const typeLabel = {
             'mañana': 'Día', 'guardia': 'Guardia',
             'noche': 'Noche', 'especial': 'Especial',
@@ -258,7 +252,9 @@ class App {
 
         return upcoming.map(s => {
             const doctor = this.doctors.getDoctorById(s.doctorId);
-            const color = typeColor[s.type] || '#94a3b8';
+            const color = getDoctorColor(doctor);
+            const textColor = getContrastColor(color);
+            const initials = getDoctorInitials(doctor);
             const label = typeLabel[s.type] || s.type;
             const date = new Date(s.date + 'T00:00:00').toLocaleDateString('es-ES', {
                 weekday: 'short', day: 'numeric', month: 'short'
@@ -266,6 +262,8 @@ class App {
             return `
                 <div class="upcoming-item">
                     <span class="upcoming-dot" style="background-color: ${color};"></span>
+                    <span class="doctor-initials-badge" style="background-color: ${color}; color: ${textColor};"
+                        title="${doctor ? this.escapeHtml(doctor.name) : 'Médico no asignado'}">${this.escapeHtml(initials)}</span>
                     <div class="upcoming-info">
                         <strong>${doctor ? this.escapeHtml(doctor.name) : 'Médico no asignado'}</strong>
                         <span>${label} · ${s.startTime || ''} - ${s.endTime || ''}</span>
@@ -311,6 +309,7 @@ class App {
         this.doctors.loadDoctors();
         this.shifts.loadShifts();
         this.calendar.renderMonthlyPreview();
+        this.shifts.renderCalendar();
         this.renderHomeDashboard();
     }
 }

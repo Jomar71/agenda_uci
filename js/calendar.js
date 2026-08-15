@@ -3,7 +3,10 @@
  */
 
 import { dataManager } from './services/data-manager.js';
-import { escapeHtml, getShiftType, formatDateLocal, todayLocal } from './utils.js';
+import {
+    escapeHtml, getShiftType, formatDateLocal, todayLocal,
+    getDoctorColor, getDoctorInitials
+} from './utils.js';
 
 export class CalendarManager {
     constructor(authManager) {
@@ -43,7 +46,10 @@ export class CalendarManager {
         const container = document.getElementById('monthly-calendar');
         if (!container) return;
 
-        const shifts = await dataManager.getAll('shifts');
+        const [shifts, doctors] = await Promise.all([
+            dataManager.getAll('shifts'),
+            dataManager.getAll('doctors')
+        ]);
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
 
@@ -77,8 +83,12 @@ export class CalendarManager {
             const dayShifts = shifts.filter(s => s.date === dateStr);
 
             const dots = dayShifts.slice(0, 5).map(s => {
+                const doctor = doctors.find(d => String(d.id).trim() === String(s.doctorId).trim());
+                const color = getDoctorColor(doctor);
+                const initials = getDoctorInitials(doctor);
                 const type = getShiftType(s.type);
-                return `<div class="shift-dot" style="background-color: ${type.color};" title="${escapeHtml(type.label)} · ${escapeHtml(s.startTime)}-${escapeHtml(s.endTime)}"></div>`;
+                return `<span class="shift-mini" style="background-color: ${color};"
+                    title="${escapeHtml(doctor ? doctor.name : 'Médico no asignado')} · ${escapeHtml(type.label)} · ${escapeHtml(s.startTime)}-${escapeHtml(s.endTime)}">${escapeHtml(initials)}</span>`;
             }).join('');
 
             html += `
@@ -96,9 +106,15 @@ export class CalendarManager {
             </div>
             <div class="calendar-legend">
                 <span>Leyenda:</span>
-                <div class="legend-item"><span class="legend-dot" style="background-color: ${getShiftType('mañana').color};"></span> Día</div>
-                <div class="legend-item"><span class="legend-dot" style="background-color: ${getShiftType('noche').color};"></span> Noche</div>
-                <div class="legend-item"><span class="legend-dot" style="background-color: ${getShiftType('especial').color};"></span> Especial / UCI</div>
+                ${doctors.slice(0, 12).map(d => {
+                    const color = getDoctorColor(d);
+                    const initials = getDoctorInitials(d);
+                    return `
+                        <div class="legend-item" title="${escapeHtml(d.name)}">
+                            <span class="legend-dot" style="background-color: ${color};"></span>
+                            <span class="legend-initials">${escapeHtml(initials)}</span>
+                        </div>`;
+                }).join('')}
             </div>`;
 
         container.innerHTML = html;

@@ -125,18 +125,21 @@ class DataManager {
                     id: generateId(), name: 'Dr. Juan Pérez', specialty: 'Cardiología',
                     email: 'juan.perez@hospital.com', phone: '+1234567890',
                     username: 'jperez', passwordHash: demoHash, photo: null,
+                    initials: 'JP', color: '#0ea5e9',
                     createdAt: now, updatedAt: now
                 },
                 {
                     id: generateId(), name: 'Dra. María García', specialty: 'Neurología',
                     email: 'maria.garcia@hospital.com', phone: '+1234567891',
                     username: 'mgarcia', passwordHash: demoHash, photo: null,
+                    initials: 'MG', color: '#f59e0b',
                     createdAt: now, updatedAt: now
                 },
                 {
                     id: generateId(), name: 'Dr. Carlos López', specialty: 'Pediatría',
                     email: 'carlos.lopez@hospital.com', phone: '+1234567892',
                     username: 'clopez', passwordHash: demoHash, photo: null,
+                    initials: 'CL', color: '#10b981',
                     createdAt: now, updatedAt: now
                 }
             ];

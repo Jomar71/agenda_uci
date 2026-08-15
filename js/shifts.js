@@ -4,7 +4,10 @@
  */
 
 import { dataManager } from './services/data-manager.js';
-import { escapeHtml, getShiftType, formatDateLocal, todayLocal } from './utils.js';
+import {
+    escapeHtml, getShiftType, formatDateLocal, todayLocal,
+    getDoctorColor, getDoctorInitials, getContrastColor
+} from './utils.js';
 
 export class ShiftsManager {
     constructor(authManager, doctorsManager) {
@@ -50,6 +53,19 @@ export class ShiftsManager {
     }
 
     getShifts() {
+        return this.shifts;
+    }
+
+    /**
+     * Turnos visibles según el rol:
+     * - Médico: solo sus propios turnos.
+     * - Administrador / visitante: todos los turnos.
+     */
+    getVisibleShifts() {
+        if (this.auth?.isLoggedIn && !this.auth.isAdmin()) {
+            const userId = this.auth.currentUser?.id;
+            return this.shifts.filter(s => String(s.doctorId).trim() === String(userId).trim());
+        }
         return this.shifts;
     }
 
@@ -176,7 +192,7 @@ export class ShiftsManager {
     }
 
     getShiftsForDate(dateStr) {
-        return this.shifts.filter(s => s.date === dateStr);
+        return this.getVisibleShifts().filter(s => s.date === dateStr);
     }
 
     renderMonthView() {
@@ -268,9 +284,17 @@ export class ShiftsManager {
             html += shifts.map(s => {
                 const doctor = this.doctorsManager.getDoctorById(s.doctorId);
                 const type = getShiftType(s.type);
+                const color = getDoctorColor(doctor);
+                const textColor = getContrastColor(color);
+                const initials = getDoctorInitials(doctor);
                 return `
-                    <div class="daily-shift-card ${escapeHtml(s.type)}" data-id="${escapeHtml(s.id)}" role="button" tabindex="0">
-                        <div class="shift-time">${escapeHtml(s.startTime)} - ${escapeHtml(s.endTime)}</div>
+                    <div class="daily-shift-card" data-id="${escapeHtml(s.id)}" role="button" tabindex="0"
+                        style="--doctor-color: ${color};">
+                        <div class="shift-time">
+                            <span class="doctor-initials-badge" style="background-color: ${color}; color: ${textColor};"
+                                title="${doctor ? escapeHtml(doctor.name) : 'Médico no asignado'}">${escapeHtml(initials)}</span>
+                            <span>${escapeHtml(s.startTime)} - ${escapeHtml(s.endTime)}</span>
+                        </div>
                         <div class="shift-info">
                             <strong>${doctor ? escapeHtml(doctor.name) : 'Médico no asignado'}</strong>
                             <span>${escapeHtml(type.label)}</span>
@@ -287,30 +311,46 @@ export class ShiftsManager {
 
     renderShiftPill(shift) {
         const doctor = this.doctorsManager.getDoctorById(shift.doctorId);
-        const name = doctor ? doctor.name.split(' ')[0] : 'Sin médico';
+        const color = getDoctorColor(doctor);
+        const textColor = getContrastColor(color);
+        const initials = getDoctorInitials(doctor);
         const type = getShiftType(shift.type);
+        const name = doctor ? doctor.name : 'Médico no asignado';
 
         return `
-            <div class="shift-pill ${escapeHtml(shift.type)}" data-id="${escapeHtml(shift.id)}" title="${escapeHtml(type.label)} · ${escapeHtml(shift.startTime)} - ${escapeHtml(shift.endTime)}">
+            <div class="shift-pill" data-id="${escapeHtml(shift.id)}"
+                style="--doctor-color: ${color}; --doctor-text-color: ${textColor};"
+                title="${escapeHtml(name)} · ${escapeHtml(type.label)} · ${escapeHtml(shift.startTime)} - ${escapeHtml(shift.endTime)}">
                 <span class="shift-type-tag">${escapeHtml(type.short)}</span>
-                <span class="shift-doctor-name">${escapeHtml(name)}</span>
+                <span class="shift-doctor-name">${escapeHtml(initials)}</span>
             </div>`;
     }
 
     renderLegend() {
-        const legend = [
-            { key: 'mañana', label: 'Día' },
-            { key: 'noche', label: 'Noche' },
-            { key: 'especial', label: 'Especial / UCI' }
-        ];
+        const doctors = this.doctorsManager.getDoctors();
+        if (!doctors.length) {
+            return `
+                <div class="calendar-legend">
+                    <span>Leyenda:</span>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background-color: #94a3b8;"></span>
+                        Sin médicos registrados
+                    </div>
+                </div>`;
+        }
         return `
             <div class="calendar-legend">
                 <span>Leyenda:</span>
-                ${legend.map(l => `
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background-color: ${getShiftType(l.key).color};"></span>
-                        ${l.label}
-                    </div>`).join('')}
+                ${doctors.map(d => {
+                    const color = getDoctorColor(d);
+                    const initials = getDoctorInitials(d);
+                    return `
+                        <div class="legend-item" title="${escapeHtml(d.name)}">
+                            <span class="legend-dot" style="background-color: ${color};"></span>
+                            <span class="legend-initials">${escapeHtml(initials)}</span>
+                            <span class="legend-name">· ${escapeHtml(String(d.name).split(' ')[0])}</span>
+                        </div>`;
+                }).join('')}
             </div>`;
     }
 

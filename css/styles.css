@@ -109,19 +109,6 @@ html[data-theme="dark"] {
     --overlay-loading: rgba(11, 18, 32, 0.7);
 }
 
-/* Texto de las píldoras de turnos más claro en tema oscuro */
-html[data-theme="dark"] .shift-pill.mañana,
-html[data-theme="dark"] .shift-pill.guardia { color: #7dd3fc; }
-
-html[data-theme="dark"] .shift-pill.noche { color: #c7d2fe; }
-
-html[data-theme="dark"] .shift-pill.especial,
-html[data-theme="dark"] .shift-pill.emergencia { color: #fca5a5; }
-
-html[data-theme="dark"] .shift-pill.consulta { color: #6ee7b7; }
-
-html[data-theme="dark"] .shift-pill.descanso { color: #cbd5e1; }
-
 /* ==================== RESET ==================== */
 *,
 *::before,
@@ -885,14 +872,23 @@ body.is-medic #medicos-nav {
 .shift-dots {
     display: flex;
     justify-content: center;
-    gap: 3px;
+    align-items: center;
+    gap: 4px;
     flex-wrap: wrap;
 }
 
-.shift-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+.shift-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 3px;
+    border-radius: 5px;
+    font-size: 0.55rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
 }
 
 /* ==================== LEYENDA ==================== */
@@ -919,6 +915,15 @@ body.is-medic #medicos-nav {
     height: 10px;
     border-radius: 50%;
     display: inline-block;
+}
+
+.legend-initials {
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+
+.legend-name {
+    color: var(--text-muted);
 }
 
 /* ==================== GESTIÓN DE TURNOS ==================== */
@@ -1047,7 +1052,9 @@ body.is-medic #medicos-nav {
     gap: 6px;
     padding: 4px 8px;
     border-radius: var(--radius-xs);
-    border: 1px solid transparent;
+    border: 1px solid var(--doctor-color, var(--shift-mañana));
+    background: var(--doctor-color, var(--shift-mañana));
+    color: var(--doctor-text-color, #fff);
     font-size: 0.72rem;
     cursor: pointer;
     transition: filter var(--transition);
@@ -1057,43 +1064,13 @@ body.is-medic #medicos-nav {
     filter: brightness(0.96);
 }
 
-.shift-pill.mañana,
-.shift-pill.guardia {
-    background: var(--shift-mañana-soft);
-    border-color: var(--shift-mañana);
-    color: #075985;
-}
-
-.shift-pill.noche {
-    background: var(--shift-noche-soft);
-    border-color: var(--shift-noche);
-    color: #3730a3;
-}
-
-.shift-pill.especial,
-.shift-pill.emergencia {
-    background: var(--shift-especial-soft);
-    border-color: var(--shift-especial);
-    color: #991b1b;
-}
-
-.shift-pill.consulta {
-    background: var(--shift-consulta-soft);
-    border-color: var(--shift-consulta);
-    color: #065f46;
-}
-
-.shift-pill.descanso {
-    background: var(--shift-descanso-soft);
-    border-color: var(--shift-descanso);
-    color: var(--text-secondary);
-}
-
 .shift-type-tag {
     font-weight: 700;
+    opacity: 0.85;
 }
 
 .shift-doctor-name {
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1103,6 +1080,21 @@ body.is-medic #medicos-nav {
     font-size: 0.7rem;
     color: var(--text-muted);
     padding-left: 4px;
+}
+
+/* Insignia de iniciales del médico (vista diaria y próximos turnos) */
+.doctor-initials-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border-radius: var(--radius-xs);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
 }
 
 /* Vista diaria */
@@ -1137,6 +1129,7 @@ body.is-medic #medicos-nav {
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-left-width: 4px;
+    border-left-color: var(--doctor-color, var(--shift-mañana));
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: box-shadow var(--transition), transform var(--transition);
@@ -1147,15 +1140,10 @@ body.is-medic #medicos-nav {
     transform: translateY(-1px);
 }
 
-.daily-shift-card.mañana,
-.daily-shift-card.guardia { border-left-color: var(--shift-mañana); }
-.daily-shift-card.noche { border-left-color: var(--shift-noche); }
-.daily-shift-card.especial,
-.daily-shift-card.emergencia { border-left-color: var(--shift-especial); }
-.daily-shift-card.consulta { border-left-color: var(--shift-consulta); }
-.daily-shift-card.descanso { border-left-color: var(--shift-descanso); }
-
 .shift-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 700;
     font-size: 0.95rem;
     white-space: nowrap;
@@ -1267,6 +1255,54 @@ body.is-medic #medicos-nav {
 .doctor-info p i {
     color: var(--border-strong);
     width: 14px;
+}
+
+/* Chip de color + iniciales del médico en su tarjeta */
+.doctor-color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.chip-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Paleta de colores del formulario de médico */
+.doctor-color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--swatch);
+    cursor: pointer;
+    padding: 0;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.color-swatch:hover {
+    transform: scale(1.12);
+}
+
+.color-swatch.active {
+    border-color: var(--text-main);
+    box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--swatch);
 }
 
 .doctor-actions {
